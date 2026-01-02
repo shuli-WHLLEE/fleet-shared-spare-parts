@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -8,15 +9,15 @@
     <!-- 1. 載入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- 2. 載入 React 和 ReactDOM (改用 cdnjs 穩定版) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+    <!-- 2. 載入 React 和 ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     
-    <!-- 3. 載入 Babel (改用 cdnjs 穩定版) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js" crossorigin="anonymous"></script>
+    <!-- 3. 載入 Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- 4. 載入 Lucide Icons (鎖定版本) -->
-    <script src="https://unpkg.com/lucide@0.263.1/dist/umd/lucide.min.js"></script>
+    <!-- 4. 載入 Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
         body { font-size: 14px; }
@@ -52,6 +53,7 @@
     <!-- ★★★ 預設內建資料庫 (直接顯示用) ★★★ -->
     <script id="default-csv-data" type="text/csv">
 ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
+0,範例,ME,"主機缸套",1,,深圳博福,,,
 1,未知,BOWTHR,"前車葉片(L:770mm/W:980mm/Root:328mm)",9,,台中碼頭,,,
 2,未知,HYDW-M,捲揚機液壓馬達 type: K3VG112,1,,台中碼頭,,,
 3,未知,HYDW-M,錨機液壓馬達 type: K3VG180,1,,台中碼頭,,,
@@ -186,9 +188,9 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
     <div id="root"></div>
 
     <script type="text/babel" data-type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query, writeBatch, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, writeBatch, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const { useState, useMemo, useRef, useEffect } = React;
 
@@ -340,7 +342,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                     remark: getVal('REMARK'),
                     decommissioned: getVal('DECOMMISSIONED'),
                     consumedQty: 0, 
-                    purchasedQty: 0, 
+                    purchasedQty: 0, // Added purchasedQty
                     usageDynamics: '' 
                 };
                 
@@ -419,6 +421,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
             }, [item]);
 
             const handleSaveUsage = async () => {
+                // Validation rule: Editing consumed or purchased quantity requires filling usage dynamics
                 const consumedChanged = localConsumedQty !== (item.consumedQty || '0');
                 const purchasedChanged = localPurchasedQty !== (item.purchasedQty || '0');
                 
@@ -629,7 +632,6 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                 }
             };
 
-            // 1. Initial Load & Connect
             useEffect(() => {
                 const embeddedCsv = document.getElementById('default-csv-data');
                 if (embeddedCsv) {
@@ -648,11 +650,9 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                 }
             }, []);
 
-            // 2. Sync Images AND Dynamics
             useEffect(() => {
                 if (!isFirebaseAvailable || !user) return;
 
-                // Listen to Images
                 const qImages = getImagesCollection(db);
                 const unsubImages = onSnapshot(qImages, (snapshot) => {
                     const images = {};
@@ -662,10 +662,6 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                     setItemImages(images);
                 });
 
-                // Listen to Inventory Data (for dynamics update)
-                // Note: We are using a hybrid approach. The base list is CSV, 
-                // but we fetch "dynamics" updates from Firestore `inventory` collection.
-                // We use the same collection path structure logic.
                 let qInventory;
                 if (envAppId) {
                     qInventory = collection(db, 'artifacts', envAppId, 'public', 'data', 'inventory');
@@ -812,24 +808,20 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
             };
 
             const seriesList = useMemo(() => {
-                const list = [...new Set(inventoryData.map(item => item.series).filter(Boolean))].sort();
-                return ['All', ...list];
+                return ['All', ...new Set(inventoryData.map(item => item.series).filter(Boolean))].sort();
             }, [inventoryData]);
             
-            // New Memo for EQP list
             const eqpList = useMemo(() => {
                 const uniqueEqp = [...new Set(inventoryData.map(item => item.eqp).filter(Boolean))].sort();
                 return ['All', ...uniqueEqp];
             }, [inventoryData]);
 
             const locationList = useMemo(() => {
-                const list = [...new Set(inventoryData.map(item => item.location).filter(Boolean))].sort();
-                return ['All', ...list];
+                return ['All', ...new Set(inventoryData.map(item => item.location).filter(Boolean))].sort();
             }, [inventoryData]);
             
             const statusList = useMemo(() => {
-                const list = [...new Set(inventoryData.map(item => item.status).filter(Boolean))].sort();
-                return ['All', ...list];
+                return ['All', ...new Set(inventoryData.map(item => item.status).filter(Boolean))].sort();
             }, [inventoryData]);
 
             const inventoryDataWithDynamics = useMemo(() => {
@@ -956,7 +948,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                                     )}
                                 </div>
                                 <div className="flex flex-col">
-                                    <h1 className="text-xl font-bold tracking-wide">庫存協作平台 (照片上傳版)</h1>
+                                    <h1 className="text-xl font-bold tracking-wide">機配件共備庫存清單</h1>
                                     <div className="text-[10px] text-slate-400 font-mono flex items-center gap-2">
                                         {cloudStatus === 'connected' ? (
                                             <span className="text-green-400 flex items-center gap-1"><Icons.Cloud className="w-3 h-3" /> 已連線</span>
@@ -1136,5 +1128,4 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
         root.render(<App />);
     </script>
 </body>
-
 </html>
