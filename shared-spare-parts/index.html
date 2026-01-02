@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>機配件共備庫存清單 (Team Sync)</title>
+    
+    <!-- 1. 載入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. 載入 React 和 ReactDOM (改用 cdnjs 穩定版) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+    
+    <!-- 3. 載入 Babel (改用 cdnjs 穩定版) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js" crossorigin="anonymous"></script>
+
+    <!-- 4. 載入 Lucide Icons (鎖定版本) -->
+    <script src="https://unpkg.com/lucide@0.263.1/dist/umd/lucide.min.js"></script>
+
+    <style>
+        body { font-size: 14px; }
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        td { vertical-align: middle; }
+        /* Modal 動畫 */
+        .modal-enter { opacity: 0; transform: scale(0.95); }
+        .modal-enter-active { opacity: 1; transform: scale(1); transition: opacity 200ms ease-out, transform 200ms ease-out; }
+        .modal-exit { opacity: 1; transform: scale(1); }
+        .modal-exit-active { opacity: 0; transform: scale(0.95); transition: opacity 200ms ease-in, transform 200ms ease-in; }
+        
+        /* 編輯模式輸入框樣式 */
+        .edit-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+        .edit-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+    
+    <!-- ★★★ 預設內建資料庫 (直接顯示用) ★★★ -->
+    <script id="default-csv-data" type="text/csv">
+ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
+1,未知,BOWTHR,"前車葉片(L:770mm/W:980mm/Root:328mm)",9,,台中碼頭,,,
+2,未知,HYDW-M,捲揚機液壓馬達 type: K3VG112,1,,台中碼頭,,,
+3,未知,HYDW-M,錨機液壓馬達 type: K3VG180,1,,台中碼頭,,,
+4,WH16系列,G-TC,VTR 564 Tubocharger rotorshaft,1,再生,台中碼頭,,,Y
+5,WH31系列,AIRCOM,主空壓機（不包括馬達）,2,再生,深圳博福,,"一台不可用-曲軸偏磨； 一台WH315 27/APR卸岸缺少備件。",
+6,WH31系列,BLR,鍋爐drain冷凝器,1,再生,深圳博福,,已清洗可交換使用,
+7,WH31系列,MONORA,甲板伙食吊車齒輪箱-改裝,1,,深圳博福,,,
+8,WH31系列,GE,發電機空冷器,1,再生,深圳博福,,,
+9,WH31系列,ME,主機缸套,1,新品,深圳博福,456642,"4.20日送WH312一個訂單號碼：427585，；存一個訂單號碼： 456642",
+10,WH31系列,ME,主機活塞頭,6,再生,深圳博福,,再生品,
+11,WH31系列,GE,發電機活塞,1,再生,深圳博福,,再生品,
+12,WH31系列,LADDER,舷梯,1,再生,深圳博福,,2024.12.20日WH317更換右舷舷梯使用一個，剩餘一架已修復,
+13,WH31系列,BLR,小 DRAIN COOLER 膽芯,1,新品,深圳博福,,新品,
+14,WH31系列,PROPEL,螺旋槳保護帽,2,新品,深圳博福,,"新品（尺寸1000mm*1000mm*650mm *300kgs ）",
+15,WH50系列,GE,發電機活塞頭,12,再生,深圳博福,,再生品,
+16,WH50系列,AIRCOM,主空壓機（不包括馬達）,1,新品,深圳博福,,新品,
+17,WH50系列,PLA-EXCH,淡水冷卻器端蓋板（前+後),1,再生,深圳博福,,鈦合金鑲套,
+18,WH50系列,FWGEN,造水機淡水泵馬達,1,再生,深圳博福,,再生品,
+19,WH50系列,ME,主機缸套,1,新品,深圳博福,,新品,
+20,WH26系列,STERNS,WH26X艉軸配件,1,,深圳博福,406439,Tammy安排，瓦錫蘭備件，訂單號：406439,Y
+21,WH30系列,LADDER,WH30X備件-ACC. LADDER WINCH & ELE'C MOTOR,1,,深圳博福,437739,NIDOX備件訂單號碼：437739,Y
+22,WH805,LIFERAFT,LIFE RAFT,7,,深圳博福,,WH805系列備用品,
+23,WH61系列,ANCHOR,WH612錨鏈,1,新品,深圳博福,,WH612上海塢修時取回新品錨鏈一節（含轉環組）,
+24,WH61系列,G-TC,發電機TC CARTIIDGE共備配件,1,新品,深圳博福,302275,訂單號302275木箱備件,
+25,WH28/29系列,HYDW-M,WH28系列絞車備件,1,,深圳博福,,顏廷睿安排船廠WH28系列共備,
+26,WH28/29系列,GE,WH28發電機曲軸,1,再生,深圳博福,,顏廷睿安排臺北轉回蛇口庫存(還未再生（等候指令修復）),
+27,WH10系列,LADDER,右舷用齒輪箱(廠商:SHINIK),1,再生,深圳博福,,,
+28,WH10系列,LADDER,採購右舷用齒輪箱,1,再生,深圳博福,313919,,
+29,WH17系列,LADDER,採購右舷用齒輪箱,1,再生,深圳博福,313919,舊品已修復目前庫存,
+30,WH17系列,LADDER,採購左舷用齒輪箱,1,再生,深圳博福,333305,,
+31,WH27系列,LADDER,採購右舷用齒輪箱,1,再生,深圳博福,328269,,
+32,WH51系列,LADDER,採購右舷用齒輪箱,1,再生,深圳博福,313919,待後續卸下整理,
+33,WH51系列,LADDER,採購左舷用齒輪箱,1,再生,深圳博福,333307,,
+34,WH50系列,LADDER,採購右舷用齒輪箱,1,再生,深圳博福,328270,待整理-舊品目前在車間，齒輪磨損嚴重，候令加工,
+35,WH61系列,LADDER,採購右舷用齒輪箱,1,再生,深圳博福,313919,待整理-舊品已整理，內部齒輪磨損嚴重、軸受損，候令加工,
+36,WH61系列,LADDER,採購左舷用齒輪箱,1,再生,深圳博福,333311,,
+37,SHI系列A07~A20),PUMP,"ME FO SUPPLY PUMP-PUMP ASSY(INCLUDE: MAGNETIC COUPLING, SAFETY VALVE, MOTOR)",1,新品,WHA09,490645,BT-IV52D4-MG,
+38,SHI系列A07~A20),PUMP,"ME FOR CIRCULATING PUMP-PUMP ASSY(INCLUDE:MAGNETIC COUPLING/SAFETY VALVE/MOTOR)",1,新品,WHA09,490645,BT-IV70D4-F-MG,
+39,SHI系列A07~A20),PUMP,"GE FO SUPPLY PUMP-PUMP ASSY(INCLUDE:MAGNETIC COUPLING/SAFETY VALVE/MOTOR)",1,新品,WHA09,490646,BT-IV52D4-F-MG),
+40,SHI系列A07~A20),PUMP,"GE FO CIRCULATING PUMP-PUMP ASSY(INCLUDE:MAGNETIC COUPLING/SAFETY VALVE/MOTOR)",1,新品,WHA09,490646,BT-IV60D4-MG,
+41,SHI系列A07~A20),PUMP,"ME FO SUPPLY PUMP-PUMP ASSY(INCLUDE:MAGNETIC COUPLING/SAFETY VALVE/MOTOR)",1,新品,WHA10,491260,BT-IV52D4-MG,
+42,SHI系列A07~A20),PUMP,"ME FOR CIRCULATING PUMP-PUMP ASSY(INCLUDE:MAGNETIC COUPLING/SAFETY VALVE/MOTOR)",1,新品,WHA10,491260,BT-IV70D4-F-MG,
+43,SHI系列A07~A20),PUMP,"GE FO SUPPLY PUMP-PUMP ASSY(INCLUDE:MAGNETIC COUPLING/SAFETY VALVE/MOTOR)",1,新品,WHA10,491261,BT-IV52D4-F-MG),
+44,SHI系列A07~A20),PUMP,"GE FO CIRCULATING PUMP-PUMP ASSY(INCLUDE:MAGNETIC COUPLING/SAFETY VALVE/MOTOR)",1,新品,WHA10,491261,BT-IV60D4-MG,
+45,SHI系列A07~A20),PUMP,"ME FO SUPPLY PUMP-PUMP ASSY(INCLUDE:MAGNETIC COUPLING/SAFETY VALVE/MOTOR)",1,新品,WHA11,490647,BT-IV52D4-MG,
+46,SHI系列A07~A20),PUMP,"ME FOR CIRCULATING PUMP-PUMP ASSY(INCLUDE:MAGNETIC COUPLING/SAFETY VALVE/MOTOR)",1,新品,WHA11,490647,BT-IV70D4-F-MG,
+47,SHI系列A07~A20),PUMP,"GE FO SUPPLY PUMP-PUMP ASSY(INCLUDE:MAGNETIC COUPLING/SAFETY VALVE/MOTOR)",1,新品,WHA11,490648,BT-IV52D4-F-MG),
+48,SHI系列A07~A20),PUMP,"GE FO CIRCULATING PUMP-PUMP ASSY(INCLUDE:MAGNETIC COUPLING/SAFETY VALVE/MOTOR)",1,新品,WHA11,490648,BT-IV60D4-MG,
+49,WH33系列,AIRCOM,AIR COMPRESSOR,1,新品,WH331,506818,XW180,
+50,WH28/29系列,AIRCOM,AIR COMPRESSOR,1,新品,WH283,506817,XW200,
+51,WH28/29系列,AIRCOM,AIR COMPRESSOR,1,新品,WH283,402790,XW200,
+52,WH28/29系列,AIRCOM,AIR COMPRESSOR,1,新品,WH286,404409,XW200,
+53,WH28/29系列,PUMP,NO.1 & NO.2 M/E CROSSHEAD L.O. PUMP,1,新品,WH285,502258,SPZ072-3B,
+54,WH28/29系列,PUMP,NO.1 & NO.2 M/E CROSSHEAD L.O. PUMP,1,新品,WH283,503326,SPZ072-3B,
+55,WH28/29系列,PUMP,NO.1 & NO.2 M/E CROSSHEAD L.O. PUMP,1,新品,WH291,504447,SPZ072-3B,
+56,WH28/29系列,PUMP,NO.1 & NO.2 M/E CROSSHEAD L.O. PUMP,1,新品,WH296,503325,SPZ072-3B,
+57,WH28/29系列,PUMP,NO.1 & NO.2 M/E CROSSHEAD L.O. PUMP,1,新品,WH288,526826,SPZ072-3B,
+58,WH28/29系列,PUMP,NO.1 & NO.2 M/E CROSSHEAD L.O. PUMP,1,新品,WH295,506060,SPZ072-3B,
+59,WH28/29系列,HYDW-M,"MOTOR FOR WINDLASS AND MOORING WINCH, TYPE: 3~FLSMVB225ST 4P, 440V, 60HZ, 1775R/MIN, 60KW, 0.81COS, 105A, MAKER: LEROY-SOMER (FOR WH288艏, 292, 293, 295, 296)",1,新品,WH288,518772,3~FLSMVB225ST,
+60,WH28/29系列,HYDW-M,"MOTOR FOR WINDLASS AND MOORING WINCH, TYPE: KDF225S-4/TF/ST/OD/BR/FU, S2-30MIN, 60KW, 440V/60HZ, 1770RMP, MAKER: BEN (FOR WH283, 285, 286, 287, 288艉, 289, 290, 291)",1,新品,WH283,518774,KDF225S-4,
+61,WH31系列,MEPC,AIR REDUCING Valve,1,,WH311,,91161-3,
+62,WH31系列,MEPC,Repair Kit for air reducing valve,1,,WH311,,91161-1,
+63,WH51系列,MSBESB,前俥ACB (NW40H3),1,,上海施耐德,,7574-1,徵用一台為WH513損壞開關替換,
+64,WH51系列,MSBESB,電機ACB (NW50H2),5,,上海施耐德,,7574-0,徵用一台為WH505損壞開關替換,
+65,WH28系列,HYDW-M,電動錨纜機馬達電機,2,新品,上海大連萬方,,兩台新品,
+66,WH28系列,HYDW-M,電動錨纜機馬達電機,3,再生,上海大連萬方,,原從WH288上取下，舊品未翻新,
+67,WH31系列,HYDW-M,液壓油泵(T6DC050-031),1,,上海大連萬方,348682,"923-0 ,WH31X甲板機械共備配件,2022.05從博福取回，需配公制螺絲",
+68,WH50系列,BOWTHR,Bow thruster葉片 HNO.835~839,1,,台中碼頭,,台中碼頭,
+69,WH27系列,GE,電子調速器 (NZ-61),1,,香港嘉銘,,2048-0 , Maker: YANMAR,
+70,WH50系列,GE,電子調速器 (RHD-10),1,,香港嘉銘,,3248-0, Maker: YANMAR,
+71,WH51系列,GE,電子調速器 (UG-25),2,,香港嘉銘,,3517-0, Maker:WOODWARD,
+72,WH51系列,ME,COOLING JACKET[ 0605-09 ],2,,高雄三中,,2022/12/05 確認存放於高雄倉庫,
+73,WH27系列,HYDW-M,液壓馬達(絞纜機)(HMC080),1,,基隆三中,,2022/12/12 確認存放於基隆倉庫,
+74,WH61系列,G-TC,G/E T/C CARTRIDGE(NR29S),1,,深圳博福,,訂單單號為302275 已轉往博福存放,
+75,WH10系列,PUMP,MOTOR OF MAIN COOL S.W PUMP(200LC),1,,高雄新光電機,352076,4415-24,  WH10X主海水泵馬達共備,
+76,WH27系列,FOPURI,淨油機馬達(440V 17KW 2P),1,再生,高雄新光電機,,2019/06/06 WH275 拿下修理,
+77,WH31系列,PUMP,ME NO.2 L.O. PUMP MOTOR,1,再生,高雄新光電機,,WH315馬達修理完畢,
+78,WH61系列,PUMP,主海水泵馬達(90KW6P),1,再生,高雄新光電機,,WH613卸下待整修,
+79,WH10系列,HYDW-M,油壓馬達(HMJC080),1,再生,高雄新益成,,WH-101 油壓馬達(舊品)108.08.15登錄,
+80,WH17系列,ME,ME AIR COOLER,1,再生,高雄新益成,,WH-172  主機冷卻器本體+2前後端蓋（端蓋狀況不佳）,
+81,WH50系列,FBB,FLEETBOARDBAND 250 - JUE-251(JRC FLEETBOARDBAND 250 - JUE-251),1,新品,高雄新益成,,81818-0,新品,
+82,WH35系列,GE,電子調速器(UG-25+) (woodward 8528-107),1,再生,新北瑞芳鴻邑,,鴻邑庫存調速器轉給WH358使用，並從往WH353卸下一台檢修,
+83,WH10系列,PROPELL,備用Propeller(13074KG/5.3M),1,新品,高雄碼頭,,,
+84,WH27/17系列,PROPELL,備用Propeller(22141KG/6.5M),1,新品,高雄碼頭,,WH28X備用螺槳簽呈說明WH17X可與WH27X共用(PITCH相同),
+85,WH31系列,PROPEL,備用Propeller(36812KG/7.19M),1,新品,高雄碼頭,,,
+86,WH50系列,PROPEL,備用Propeller(56477KG/8.0M),1,新品,高雄碼頭,,,
+87,WH51系列,PROPELL,備用Propeller(56477KG/8.1M),1,新品,高雄碼頭,,新俥葉已轉出~目前存放俥葉為原WH516.5可用舊品(3/25),
+88,WH32系列,PROPELL,備用Propeller(54840KG/7.8M),1,新品,高雄碼頭,,2021.05.17從WH328高雄卸岸,
+89,WH28/29系列,PROPELL,備88180KG/7.1M),1,新品,高雄碼頭,,,
+90,WH35系列,PROPELL,備用Propeller(54840KG/7.8M),1,新品,高雄碼頭,,與WH32同型,
+91,WH33系列,PROPEL,備用Propeller(32820KG/7.8M),1,新品,高雄碼頭,,20231227搭台船五號泊船停靠65w轉入高碼,
+92,SHI系列A07~A20),PROPELL,備用Propeller(68500KG/9.6M),1,新品,高雄碼頭,,,
+93,HHI系列(A01~A06),PROPELL,備用Propeller(80320KG/9.6M),1,新品,高雄碼頭,,20231219搭大新輪泊船停靠63W轉入高碼,
+94,WH23系列,PROPEL,備用Propeller cap,1,,高雄碼頭,,PBCF汰換下/位於保養廠南側,Y
+95,WH321~35系列,PROPELL,備用Propeller cap,1,,高雄碼頭,,PBCF汰換下,位於保養廠南側,
+96,WH36~37系列,PROPELL,備用Propeller cap,1,,高雄碼頭,,PBCF汰換下,位於保養廠南側,
+97,WH31系列,PROPEL,備用Propeller cap,1,,高雄碼頭,,PBCF汰換下,位於保養廠南側,
+98,WH50系列,PROPEL,備用Propeller cap,1,,高雄碼頭,,PBCF汰換下,位於保養廠南側,
+99,WH50系列,PROPEL,備用Propeller cap,1,新品,高雄碼頭,,新船備品(木箱),位於保養廠加油平臺(至於下),
+100,WH60系列,PROPEL,備用Propeller cap,1,新品,高雄碼頭,,新船備品(無木箱)/位於保養廠加油平臺(至於上),Y
+101,WH10系列,PROPELL,備用Propeller cap,1,新品,高雄碼頭,,新品(木箱)置於下方,位於保養廠南側,
+102,WH27系列,PROPELL,備用Propeller cap,1,新品,高雄碼頭,,新品(木箱)置於上方,位於保養廠南側,
+103,未知,M-TC,主機透平出口外殼,1,再生,高雄碼頭,,可用舊品(木箱),新益成整修後2016/08/29移入,置於c棟1F,
+104,未知,M-TC,主機透平進口外殼,1,再生,高雄碼頭,,可用舊品(木箱),新益成整修後2016/08/29移入,置於c棟1F,
+105,WH30系列,HYDW-M,油壓馬達,2,,高雄碼頭,,brand:Kawasaki model:HMKC200T3/188/80w1**A72RJ203A  520KG長103CM寬83CM高90CM  2件,Y
+106,WH16系列,GE,WH16系列曲軸,1,,高雄碼頭,,(CRANKSHAFT)700kg 244*62*60  1件,Y
+107,WH23系列,HYDW-M,Hydraulic moter,1,,高雄碼頭,,HVK 520KG 950*560*500mm  1件,Y
+108,WH26系列,HYDW-M,Hydraulic moter,1,,高雄碼頭,,HVN-STS 520KG  800*550*650mm  1件,Y
+109,WH23系列,HYDW-M,Hydraulic moter,1,,高雄碼頭,,HVL-C  520KG  1050*600*500mm  1件,Y
+110,未知,ME,主機冷卻水套ID2-1,2,,高雄碼頭,,Cooling jacket 1340*1360*550mm  2件,
+111,WH51系列,AU-HEEL,HEELING PUMP 平衡泵共備,1,新品,WH511,524282,PO#524282，已於11.11 SHA供船,
+112,WH32/35/36/37系列,HYDW-M,JMU-錨機INVERTOR在日陞倉庫,1,新品,高雄日陞,527621,PO#527621，錨機變頻器，採購共備一組儲放於日陞倉庫做風險庫存,
+113,WH28/29系列,HYDW-M,"MOTOR FOR WINDLASS AND MOORING WINCH, TYPE: KDF225S-4/TF/ST/OD/BR/FU, S2-30MIN, 60KW, 440V/60HZ, 1770RMP, MAKER: BEN (FOR WH283, 285, 286, 287, 288艉, 289, 290, 291)",1,新品,上海丹華,518774,錨機_風險配件統購案_馬達(共備),
+114,WH33系列,HYDW-M,ELECTRIC MOTOR WITH BRAKE,1,新品,WH331,519860,錨機_風險配件統購案_馬達(共備),
+115,WH32/35/36/37系列,HYDW-M,錨機馬達(左),1,新品,WH351,,錨機風險配件-OB,
+116,WH32/35/36/37系列,HYDW-M,錨機馬達(右),1,新品,WH355,,錨機風險配件-OB,
+117,WH51系列,HYDW-M,"HYDR. OIL MOTOR (TYPE:HMC200-S-188-60-FM4-CS/M4:PL717;M1,2,3:PL830)",1,再生,WH511,,WH513 左舷錨機液壓馬達緊急採購2手品更換，；換下來的舊品送至大連萬芳廣州車間再生(ID-8524-1 ),
+118,HHI系列(A01~A06),HYDW-M,ELECTRIC MOTOR (PPW-28MB49Q),1,新品,上海大連萬方,520467,WHA01-A20錨機風險配件統購，A01-A06共備一組MOTOR,
+119,HHI系列(A01~A06),HYDW-M,Overload coupling,1,新品,上海大連萬方,520467,WHA01-A20錨機風險配件統購，A01-A06共備一組Overload coupling,
+120,SHI系列A07~A20),HYDW-M,"BRAKE-MOTOR PPW-28MB44Q/B5/IC410/IP56/140KW-2P=4",1,新品,上海大連萬方,520468,WHA01-A20錨機風險配件統購，A07-A20共備2組MOTOR,
+121,SHI系列A07~A20),HYDW-M,OVERLOAD COUPLING,1,新品,上海大連萬方,520468,WHA01-A20錨機風險配件統購，A07-A20共備2組Overload coupling,
+122,SHI系列A07~A20),HYDW-M,"BRAKE-MOTOR PPW-28MB44Q/B5/IC410/IP56/140KW-2P=4",1,新品,深圳博福,520468,WHA01-A20錨機風險配件統購，A07-A20共備2組MOTOR,
+123,SHI系列A07~A20),HYDW-M,OVERLOAD COUPLING,1,新品,深圳博福,520468,WHA01-A20錨機風險配件統購，A07-A20共備2組Overload coupling,
+124,SHI系列A07~A20),AN-HEEL,REVERSIBLE PROPELLER PUMP (MODEL:V400A),1,新品,深圳博福,534189,SHI系列船ANTI HEELING PUMP WITH MOTOR共備配件；(尚未出貨，約2月初出貨),
+125,WH32/35/36/37系列,PUMP,MGPE泵整組,2,新品,基隆元昌,519327,全新品，P/O.519327 & P/O.519328,
+126,WH32/35/36/37系列,PUMP,MGPE泵整組,2,新品,深圳博福,519325,全新品，P/O.519325 & P/O.519326,
+127,WH51系列,HYDW-M,Hydraulic Motor (HMC200-S),1,新品,WH511,502240,2024船隊甲機共備配件,
+128,WH31系列,HYDW-M,Hydraulic Motor (HMB125-S),1,新品,WH315,503170,2024船隊甲機共備配件,
+129,WH50系列,HYDW-M,Hydraulic Motor (HMC125-S),1,新品,WH501,503168,2024船隊甲機共備配件,
+    </script>
+
+    <div id="root"></div>
+
+    <script type="text/babel" data-type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, writeBatch, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const { useState, useMemo, useRef, useEffect } = React;
+
+        // --- Firebase Configuration ---
+        // ★★★ 請在此填入您的 Firebase 設定 ★★★
+        const userFirebaseConfig = {
+            apiKey: "AIzaSyCpTCB9KSBkgNyKYShLG3O-yQ3WjVXA3uQ",
+            authDomain: "fleet-shared-spare-parts-57068.firebaseapp.com",
+            databaseURL: "https://fleet-shared-spare-parts-57068-default-rtdb.firebaseio.com",
+            projectId: "fleet-shared-spare-parts-57068",
+            storageBucket: "fleet-shared-spare-parts-57068.firebasestorage.app",
+            messagingSenderId: "36844325416",
+            appId: "1:36844325416:web:4f6d0c45210153ef65c31d",
+            measurementId: "G-03K8LLGZVW"
+        };
+
+        let app, auth, db;
+        // 優先使用環境變數(預覽用)，若無則使用使用者自定義設定
+        const configToUse = (typeof __firebase_config !== 'undefined') 
+            ? JSON.parse(__firebase_config) 
+            : (Object.keys(userFirebaseConfig).length > 0 && !userFirebaseConfig.apiKey.includes("請在此填入") ? userFirebaseConfig : null);
+
+        let isFirebaseAvailable = false;
+        
+        // Canvas 環境下的 App ID (預覽用)
+        const envAppId = typeof __app_id !== 'undefined' ? __app_id : null;
+
+        try {
+            if (configToUse) {
+                app = initializeApp(configToUse);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                isFirebaseAvailable = true;
+            } else {
+                console.warn("Firebase config not found. Running in offline mode.");
+            }
+        } catch (e) {
+            console.error("Error initializing Firebase:", e);
+        }
+
+        // --- Helper: Get Collection Path ---
+        const getImagesCollection = (db) => {
+            if (envAppId) {
+                return collection(db, 'artifacts', envAppId, 'public', 'data', 'images');
+            } else {
+                return collection(db, 'images');
+            }
+        };
+        
+        const getInventoryCollection = (db) => {
+             if (envAppId) {
+                return collection(db, 'artifacts', envAppId, 'public', 'data', 'inventory');
+            } else {
+                return collection(db, 'inventory');
+            }
+        };
+
+        // --- Image Compression Helper ---
+        // Robust compression with 500px width and 0.4 quality for fast upload
+        const compressImage = (file, maxWidth = 500, quality = 0.4) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                
+                reader.onload = (event) => {
+                    const img = new Image();
+                    
+                    img.onload = () => {
+                        try {
+                            let width = img.width;
+                            let height = img.height;
+                            
+                            if (width > maxWidth) {
+                                height = Math.round((height * maxWidth) / width);
+                                width = maxWidth;
+                            }
+
+                            const canvas = document.createElement('canvas');
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            
+                            resolve(canvas.toDataURL('image/jpeg', quality));
+                        } catch (e) {
+                            reject(new Error("Image compression failed: " + e.message));
+                        }
+                    };
+                    
+                    img.onerror = () => reject(new Error("Failed to load image for compression"));
+                    
+                    // Assign src AFTER defining onload to ensure event capture
+                    img.src = event.target.result;
+                };
+                
+                reader.onerror = () => reject(new Error("Failed to read file"));
+            });
+        };
+
+        const parseLine = (text) => {
+            const result = [];
+            let cell = '';
+            let inQuote = false;
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                if (char === '"') inQuote = !inQuote;
+                else if (char === ',' && !inQuote) { result.push(cell.trim()); cell = ''; }
+                else cell += char;
+            }
+            result.push(cell.trim());
+            return result.map(c => c.replace(/^"|"$/g, '').replace(/""/g, '"'));
+        };
+
+        const parseCSVText = (csvText) => {
+            const lines = csvText.split(/\r\n|\n/).map(l => l.trim()).filter(l => l);
+            const headerRowIndex = lines.findIndex(line => 
+                line.toUpperCase().includes('ID') && 
+                (line.toUpperCase().includes('SERIES') || line.toUpperCase().includes('TYPENAME'))
+            );
+            if (headerRowIndex === -1) return [];
+            
+            const headers = parseLine(lines[headerRowIndex]);
+            const colMap = {};
+            headers.forEach((h, i) => {
+                const key = h.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                colMap[key] = i;
+            });
+
+            const newData = [];
+            for (let i = headerRowIndex + 1; i < lines.length; i++) {
+                const row = parseLine(lines[i]);
+                if (row.length < 3) continue; 
+                
+                const getVal = (keyPart) => {
+                    const key = Object.keys(colMap).find(k => k.includes(keyPart));
+                    const idx = colMap[key];
+                    return (idx !== undefined && row[idx]) ? row[idx] : '';
+                };
+
+                const item = {
+                    id: getVal('ID'),
+                    series: getVal('SERIES'),
+                    eqp: getVal('EQP'),
+                    typeName: getVal('TYPENAME'),
+                    qty: getVal('QTY'),
+                    status: getVal('STATUS'),
+                    location: getVal('LOCATION'),
+                    po: getVal('PO'),
+                    remark: getVal('REMARK'),
+                    decommissioned: getVal('DECOMMISSIONED'),
+                    consumedQty: 0, 
+                    purchasedQty: 0, 
+                    usageDynamics: '' 
+                };
+                
+                if (item.typeName || item.series) newData.push(item);
+            }
+            return newData;
+        };
+
+        const LucideIcon = ({ name, className, size = 24, ...props }) => {
+            const ref = useRef(null);
+
+            useEffect(() => {
+                if (!ref.current || !window.lucide) return;
+                ref.current.innerHTML = '';
+                
+                if (typeof window.lucide.createElement === 'function') {
+                     const iconNode = window.lucide.icons[name];
+                     if (iconNode) {
+                         const svg = window.lucide.createElement(iconNode);
+                         svg.setAttribute('width', size);
+                         svg.setAttribute('height', size);
+                         if (className) svg.setAttribute('class', className);
+                         Object.keys(props).forEach(k => svg.setAttribute(k, props[k]));
+                         ref.current.appendChild(svg);
+                     }
+                }
+            }, [name, className, size, JSON.stringify(props)]);
+
+            return <span ref={ref} className="inline-flex items-center justify-center" style={{ width: size, height: size }} />;
+        };
+
+        const Icons = {
+            Search: (props) => <LucideIcon name="Search" {...props} />,
+            Filter: (props) => <LucideIcon name="Filter" {...props} />,
+            Package: (props) => <LucideIcon name="Package" {...props} />, 
+            MapPin: (props) => <LucideIcon name="MapPin" {...props} />,
+            LayoutGrid: (props) => <LucideIcon name="LayoutGrid" {...props} />,
+            List: (props) => <LucideIcon name="List" {...props} />,
+            Upload: (props) => <LucideIcon name="Upload" {...props} />,
+            Download: (props) => <LucideIcon name="Download" {...props} />,
+            RefreshCw: (props) => <LucideIcon name="RefreshCw" {...props} />,
+            Settings: (props) => <LucideIcon name="Settings" {...props} />,
+            User: (props) => <LucideIcon name="User" {...props} />,
+            Info: (props) => <LucideIcon name="Info" {...props} />,
+            FileText: (props) => <LucideIcon name="FileText" {...props} />,
+            Wrench: (props) => <LucideIcon name="Wrench" {...props} />,
+            Archive: (props) => <LucideIcon name="Archive" {...props} />,
+            Layers: (props) => <LucideIcon name="Layers" {...props} />,
+            Zap: (props) => <LucideIcon name="Zap" {...props} />,
+            Hash: (props) => <LucideIcon name="Hash" {...props} />,
+            Trash2: (props) => <LucideIcon name="Trash2" {...props} />,
+            Image: (props) => <LucideIcon name="Image" {...props} />,
+            Camera: (props) => <LucideIcon name="Camera" {...props} />,
+            X: (props) => <LucideIcon name="X" {...props} />,
+            Cloud: (props) => <LucideIcon name="Cloud" {...props} />,
+            CloudOff: (props) => <LucideIcon name="CloudOff" {...props} />,
+            Loader2: (props) => <LucideIcon name="Loader2" {...props} />,
+            LogOut: (props) => <LucideIcon name="LogOut" {...props} />,
+            Save: (props) => <LucideIcon name="Save" {...props} />,
+            Box: (props) => <LucideIcon name="Box" {...props} />,
+            PlusSquare: (props) => <LucideIcon name="PlusSquare" {...props} />,
+        };
+
+        const Modal = ({ isOpen, onClose, item, onUpload, imageUrl, isUploading, uploadStatus, onUpdateUsage }) => {
+            const [localConsumedQty, setLocalConsumedQty] = useState('0');
+            const [localPurchasedQty, setLocalPurchasedQty] = useState('0');
+            const [localDynamics, setLocalDynamics] = useState('');
+            const [isSaving, setIsSaving] = useState(false);
+
+            useEffect(() => {
+                if (item) {
+                    setLocalConsumedQty(item.consumedQty || '0');
+                    setLocalPurchasedQty(item.purchasedQty || '0');
+                    setLocalDynamics(item.usageDynamics || '');
+                }
+            }, [item]);
+
+            const handleSaveUsage = async () => {
+                const consumedChanged = localConsumedQty !== (item.consumedQty || '0');
+                const purchasedChanged = localPurchasedQty !== (item.purchasedQty || '0');
+                
+                if ((consumedChanged || purchasedChanged) && !localDynamics.trim()) {
+                    alert("請填寫庫存耗用動態才能存檔！");
+                    return;
+                }
+                
+                if (onUpdateUsage && item) {
+                    setIsSaving(true);
+                    await onUpdateUsage(item.id, localConsumedQty, localPurchasedQty, localDynamics);
+                    setIsSaving(false);
+                }
+            };
+
+            if (!isOpen || !item) return null;
+            
+            const remainingQty = parseInt(item.qty || 0) - parseInt(localConsumedQty || 0) + parseInt(localPurchasedQty || 0);
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all duration-300 scale-100 flex flex-col max-h-[90vh]">
+                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center shrink-0">
+                            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2 truncate pr-4">
+                                <Icons.Package className="w-5 h-5 text-blue-600 shrink-0" />
+                                {item.series} - {item.typeName}
+                            </h3>
+                            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition p-1 hover:bg-slate-200 rounded-full">
+                                <Icons.X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        
+                        <div className="p-6 overflow-y-auto">
+                            <div className="space-y-4">
+                                <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 min-h-[250px] relative group overflow-hidden">
+                                    {isUploading ? (
+                                        <div className="flex flex-col items-center text-blue-500">
+                                            <Icons.Loader2 className="w-10 h-10 animate-spin mb-2" />
+                                            <span className="text-sm font-medium">{uploadStatus}</span>
+                                        </div>
+                                    ) : imageUrl ? (
+                                        <img src={imageUrl} alt="Item Preview" className="w-full h-full object-contain max-h-[300px] rounded-lg shadow-sm" />
+                                    ) : (
+                                        <div className="flex flex-col items-center text-slate-400">
+                                            <Icons.Image className="w-12 h-12 mb-2" />
+                                            <span className="text-sm">尚無照片 (上傳後將同步)</span>
+                                        </div>
+                                    )}
+                                    
+                                    {!isUploading && (
+                                        <label className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center cursor-pointer transition-all">
+                                            <span className="bg-white/95 text-slate-700 px-4 py-2 rounded-full shadow-lg font-bold text-sm opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 ring-1 ring-slate-200">
+                                                <Icons.Camera className="w-4 h-4" />
+                                                {imageUrl ? '更換雲端照片' : '上傳照片至雲端'}
+                                            </span>
+                                            <input type="file" accept="image/*" className="hidden" onChange={(e) => onUpload(item.id, e)} />
+                                        </label>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                        <span className="text-xs text-slate-400 block mb-1">設備代碼</span>
+                                        <span className="font-mono font-bold text-slate-700">{item.eqp}</span>
+                                    </div>
+                                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                        <span className="text-xs text-slate-400 block mb-1">庫存地點</span>
+                                        <span className="font-bold text-slate-700 flex items-center gap-1">
+                                            <Icons.MapPin className="w-3 h-3 text-slate-400" />
+                                            {item.location}
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                        <span className="text-xs text-slate-400 block mb-1">原始數量 (不可變更)</span>
+                                        <span className="font-bold text-slate-600 text-lg">{item.qty}</span>
+                                    </div>
+
+                                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                        <span className="text-xs text-slate-400 block mb-1">PO 號碼</span>
+                                        <span className="font-mono text-slate-600">{item.po || '-'}</span>
+                                    </div>
+                                    
+                                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 col-span-2">
+                                        <span className="text-xs text-slate-400 block mb-1">狀態</span>
+                                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold ${
+                                            item.status === '新品' ? 'bg-green-100 text-green-700' : 
+                                            item.status === '再生' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-700'
+                                        }`}>{item.status || '未標示'}</span>
+                                        {item.decommissioned === 'Y' && <span className="ml-2 text-red-500 font-bold text-xs">[已除役]</span>}
+                                    </div>
+                                </div>
+
+                                {/* Usage Management Section */}
+                                <div className="bg-blue-50/50 p-3 rounded-lg border border-blue-100">
+                                    <div className="flex justify-between items-center mb-2 border-b border-blue-200 pb-2">
+                                        <label className="text-sm font-bold text-blue-800 flex items-center gap-1">
+                                            <Icons.Box className="w-4 h-4" /> 庫存異動管理
+                                        </label>
+                                        <div className="text-xs text-blue-600">
+                                            剩餘庫存: <span className={`font-bold text-base ${remainingQty <= 0 ? 'text-red-600' : 'text-blue-800'}`}>{remainingQty}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="space-y-3">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-xs text-blue-600 mb-1">耗用數量 (Consumed)</label>
+                                                <input 
+                                                    type="number" 
+                                                    className="w-full p-2 border border-blue-200 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                                    value={localConsumedQty}
+                                                    onChange={(e) => setLocalConsumedQty(e.target.value)}
+                                                    min="0"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-green-600 mb-1">採購數量 (Purchased)</label>
+                                                <input 
+                                                    type="number" 
+                                                    className="w-full p-2 border border-green-200 rounded text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                                                    value={localPurchasedQty}
+                                                    onChange={(e) => setLocalPurchasedQty(e.target.value)}
+                                                    min="0"
+                                                />
+                                            </div>
+                                        </div>
+                                        
+                                        <div>
+                                            <label className="block text-xs text-blue-600 mb-1">庫存耗用動態 (必填)</label>
+                                            <textarea 
+                                                className="w-full p-2 border border-blue-200 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none min-h-[60px]"
+                                                value={localDynamics}
+                                                onChange={(e) => setLocalDynamics(e.target.value)}
+                                                placeholder="請輸入變動原因 (數量變更時必填)..."
+                                            ></textarea>
+                                        </div>
+
+                                        <button 
+                                            onClick={handleSaveUsage}
+                                            disabled={isSaving}
+                                            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                        >
+                                            {isSaving ? <Icons.Loader2 className="w-4 h-4 animate-spin" /> : <><Icons.Save className="w-4 h-4" /> 儲存變動</>}
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                {item.remark && (
+                                    <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100 text-sm text-yellow-800 flex gap-2 items-start">
+                                        <Icons.Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                        <span>{item.remark}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [inventoryData, setInventoryData] = useState([]);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [selectedSeries, setSelectedSeries] = useState('All');
+            const [selectedEqp, setSelectedEqp] = useState('All'); 
+            const [selectedLocation, setSelectedLocation] = useState('All');
+            const [selectedStatus, setSelectedStatus] = useState('All');
+            const [selectedDecommissioned, setSelectedDecommissioned] = useState('All');
+            const [viewMode, setViewMode] = useState('table');
+            const [encoding, setEncoding] = useState('UTF-8');
+            const [dataStatus, setDataStatus] = useState('讀取中...'); 
+            const fileInputRef = useRef(null);
+            
+            const [user, setUser] = useState(null);
+            const [itemImages, setItemImages] = useState({});
+            const [cloudData, setCloudData] = useState({}); // Stores cloud data { consumedQty, purchasedQty, usageDynamics }
+            const [modalOpen, setModalOpen] = useState(false);
+            const [selectedItem, setSelectedItem] = useState(null);
+            const [isUploading, setIsUploading] = useState(false);
+            const [uploadStatus, setUploadStatus] = useState('上傳中...');
+            const [cloudStatus, setCloudStatus] = useState('offline');
+
+            const connectToFirebase = async () => {
+                if (userFirebaseConfig.apiKey.includes("請在此填入")) {
+                    alert("⚠️ 請先設定 Firebase！\n\n請在程式碼中找到 `userFirebaseConfig` (約第140行)，並填入您 Firebase 專案的設定值。\n(請參考 Firebase Console > Project Settings)");
+                    setCloudStatus('error');
+                    return;
+                }
+
+                if (!isFirebaseAvailable) return;
+                
+                try {
+                    setCloudStatus('connecting');
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Auth error:", error);
+                    setCloudStatus('error');
+                    if (error.code === 'auth/operation-not-allowed') {
+                        alert('連線失敗：請到 Firebase Console > Build > Authentication > Sign-in method 開啟「匿名 (Anonymous)」登入功能。');
+                    } else {
+                        alert(`連線失敗：${error.message}`);
+                    }
+                }
+            };
+
+            // 1. Initial Load & Connect
+            useEffect(() => {
+                const embeddedCsv = document.getElementById('default-csv-data');
+                if (embeddedCsv) {
+                    const data = parseCSVText(embeddedCsv.textContent.trim());
+                    setInventoryData(data);
+                    setDataStatus('已載入清單 (等待圖片同步...)');
+                }
+                connectToFirebase();
+                if (isFirebaseAvailable) {
+                    const unsubscribe = onAuthStateChanged(auth, (u) => {
+                        setUser(u);
+                        setCloudStatus(u ? 'connected' : 'error');
+                        if (u) setDataStatus('雲端已連線');
+                    });
+                    return () => unsubscribe();
+                }
+            }, []);
+
+            // 2. Sync Images AND Dynamics
+            useEffect(() => {
+                if (!isFirebaseAvailable || !user) return;
+
+                // Listen to Images
+                const qImages = getImagesCollection(db);
+                const unsubImages = onSnapshot(qImages, (snapshot) => {
+                    const images = {};
+                    snapshot.forEach((doc) => {
+                        images[doc.id] = doc.data().base64;
+                    });
+                    setItemImages(images);
+                });
+
+                // Listen to Inventory Data (for dynamics update)
+                // Note: We are using a hybrid approach. The base list is CSV, 
+                // but we fetch "dynamics" updates from Firestore `inventory` collection.
+                // We use the same collection path structure logic.
+                let qInventory;
+                if (envAppId) {
+                    qInventory = collection(db, 'artifacts', envAppId, 'public', 'data', 'inventory');
+                } else {
+                    qInventory = collection(db, 'inventory');
+                }
+
+                const unsubInventory = onSnapshot(qInventory, (snapshot) => {
+                    const dataMap = {};
+                    snapshot.forEach((doc) => {
+                        dataMap[doc.id] = doc.data();
+                    });
+                    setCloudData(dataMap);
+                    setDataStatus('同步完成');
+                });
+
+                return () => {
+                    unsubImages();
+                    unsubInventory();
+                };
+            }, [user]);
+
+            const handleUpdateUsage = async (itemId, newConsumedQty, newPurchasedQty, newUsageDynamics) => {
+                 if (!user) return alert("尚未連線至雲端");
+                 try {
+                     let docRef;
+                     if (envAppId) {
+                        docRef = doc(db, 'artifacts', envAppId, 'public', 'data', 'inventory', String(itemId));
+                     } else {
+                        docRef = doc(db, 'inventory', String(itemId));
+                     }
+                     
+                     await setDoc(docRef, { 
+                         consumedQty: newConsumedQty,
+                         purchasedQty: newPurchasedQty,
+                         usageDynamics: newUsageDynamics
+                     }, { merge: true });
+                 } catch (e) {
+                     console.error("Update usage failed", e);
+                     alert("更新失敗: " + e.message);
+                 }
+            };
+
+            const handleImageUpload = async (id, event) => {
+                if (!user) return alert("尚未連線至雲端，請檢查網路或專案設定");
+                const file = event.target.files[0];
+                if (file) {
+                    setIsUploading(true);
+                    setUploadStatus('壓縮圖片中...');
+                    const timeoutId = setTimeout(() => {
+                        if (isUploading) {
+                            setIsUploading(false);
+                            alert("上傳逾時 (60秒)！請檢查您的網路連線或 Firebase 設定。");
+                        }
+                    }, 60000); 
+
+                    try {
+                        const compressedBase64 = await compressImage(file, 500, 0.4);
+                        if (compressedBase64.length > 800000) {
+                            throw new Error("圖片壓縮後仍然過大 (" + Math.round(compressedBase64.length/1024) + "KB)，請嘗試更小的圖片");
+                        }
+
+                        let docRef;
+                        if (envAppId) {
+                            docRef = doc(db, 'artifacts', envAppId, 'public', 'data', 'images', String(id));
+                        } else {
+                            docRef = doc(db, 'images', String(id));
+                        }
+
+                        setUploadStatus('上傳雲端中...');
+                        await setDoc(docRef, {
+                            base64: compressedBase64,
+                            updatedBy: user.uid,
+                            updatedAt: new Date().toISOString()
+                        });
+                        
+                        clearTimeout(timeoutId); 
+                    } catch (error) {
+                        clearTimeout(timeoutId); 
+                        console.error(error);
+                        let msg = error.message;
+                        if (error.code === 'permission-denied') {
+                            msg = "權限不足 (Permission Denied)\n請檢查 Firestore Database 的 Rules (規則) 是否已設為 allow read, write: if true;";
+                        } else if (msg.includes("Image compression")) {
+                            msg = "圖片讀取/壓縮失敗";
+                        }
+                        alert(`上傳失敗: ${msg}`);
+                    } finally {
+                        setIsUploading(false);
+                    }
+                }
+            };
+
+            const openModal = (item) => {
+                const cloud = cloudData[item.id] || {};
+                const syncedItem = {
+                    ...item,
+                    consumedQty: cloud.consumedQty || '0',
+                    purchasedQty: cloud.purchasedQty || '0',
+                    usageDynamics: cloud.usageDynamics || ''
+                };
+                setSelectedItem(syncedItem);
+                setModalOpen(true);
+            };
+
+            const closeModal = () => {
+                setModalOpen(false);
+                setSelectedItem(null);
+            };
+
+            const handleExport = () => {
+                const headers = ['ID', 'SERIES', 'EQP', 'TYPENAME', 'QTY_ORIGINAL', 'QTY_CONSUMED', 'QTY_PURCHASED', 'QTY_REMAINING', 'STATUS', 'LOCATION', 'PO', 'REMARK', 'USAGE_DYNAMICS', 'DECOMMISSIONED'];
+                const csvContent = [
+                    headers.join(','),
+                    ...filteredDataWithDynamics.map(row => {
+                        const remaining = parseInt(row.qty || 0) - parseInt(row.consumedQty || 0) + parseInt(row.purchasedQty || 0);
+                        return [
+                            row.id, 
+                            `"${row.series || ''}"`, 
+                            `"${row.eqp || ''}"`, 
+                            `"${row.typeName.replace(/"/g, '""') || ''}"`, 
+                            row.qty, 
+                            row.consumedQty || '0',
+                            row.purchasedQty || '0',
+                            remaining,
+                            row.status, 
+                            row.location, 
+                            row.po, 
+                            `"${row.remark.replace(/"/g, '""') || ''}"`,
+                            `"${(row.usageDynamics || '').replace(/"/g, '""')}"`,
+                            row.decommissioned
+                        ].join(',');
+                    })
+                ].join('\n');
+
+                const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' }); 
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `inventory_export_${new Date().toISOString().slice(0,10)}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
+            const seriesList = useMemo(() => {
+                const list = [...new Set(inventoryData.map(item => item.series).filter(Boolean))].sort();
+                return ['All', ...list];
+            }, [inventoryData]);
+            
+            // New Memo for EQP list
+            const eqpList = useMemo(() => {
+                const uniqueEqp = [...new Set(inventoryData.map(item => item.eqp).filter(Boolean))].sort();
+                return ['All', ...uniqueEqp];
+            }, [inventoryData]);
+
+            const locationList = useMemo(() => {
+                const list = [...new Set(inventoryData.map(item => item.location).filter(Boolean))].sort();
+                return ['All', ...list];
+            }, [inventoryData]);
+            
+            const statusList = useMemo(() => {
+                const list = [...new Set(inventoryData.map(item => item.status).filter(Boolean))].sort();
+                return ['All', ...list];
+            }, [inventoryData]);
+
+            const inventoryDataWithDynamics = useMemo(() => {
+                return inventoryData.map(item => {
+                    const cloud = cloudData[item.id] || {};
+                    return {
+                        ...item,
+                        consumedQty: cloud.consumedQty || '0',
+                        purchasedQty: cloud.purchasedQty || '0',
+                        usageDynamics: cloud.usageDynamics || ''
+                    };
+                });
+            }, [inventoryData, cloudData]);
+
+            const filteredDataWithDynamics = useMemo(() => {
+                return inventoryDataWithDynamics.filter(item => {
+                    const term = searchTerm.toLowerCase();
+                    const matchesSearch = 
+                        (item.typeName && item.typeName.toLowerCase().includes(term)) ||
+                        (item.eqp && item.eqp.toLowerCase().includes(term)) ||
+                        (item.po && item.po.toLowerCase().includes(term)) ||
+                        (item.remark && item.remark.toLowerCase().includes(term)) ||
+                        (item.status && item.status.toLowerCase().includes(term)) || 
+                        (item.decommissioned === 'Y' && '除役'.includes(term));
+                    
+                    const matchesSeries = selectedSeries === 'All' || item.series === selectedSeries;
+                    const matchesEqp = selectedEqp === 'All' || item.eqp === selectedEqp;
+                    const matchesLocation = selectedLocation === 'All' || item.location === selectedLocation;
+                    const matchesStatus = selectedStatus === 'All' || 
+                        (selectedStatus === 'Empty' ? !item.status : item.status === selectedStatus);
+                    
+                    const isDecommissioned = item.decommissioned === 'Y';
+                    const matchesDecommissioned = 
+                        selectedDecommissioned === 'All' || 
+                        (selectedDecommissioned === 'Active' && !isDecommissioned) ||
+                        (selectedDecommissioned === 'Decommissioned' && isDecommissioned);
+
+                    return matchesSearch && matchesSeries && matchesEqp && matchesLocation && matchesStatus && matchesDecommissioned;
+                });
+            }, [inventoryDataWithDynamics, searchTerm, selectedSeries, selectedEqp, selectedLocation, selectedStatus, selectedDecommissioned]);
+
+            const stats = useMemo(() => {
+                const totalItems = filteredDataWithDynamics.length;
+                const totalQty = filteredDataWithDynamics.reduce((acc, curr) => acc + (parseInt(curr.qty) || 0), 0);
+                
+                const totalRemaining = filteredDataWithDynamics.reduce((acc, curr) => {
+                    const remaining = parseInt(curr.qty || 0) - parseInt(curr.consumedQty || 0) + parseInt(curr.purchasedQty || 0);
+                    return acc + (remaining > 0 ? remaining : 0);
+                }, 0);
+
+                const newItemsCount = filteredDataWithDynamics.filter(i => i.status === '新品').length;
+                const reconditionedCount = filteredDataWithDynamics.filter(i => i.status === '再生').length;
+                return { totalItems, totalQty, totalRemaining, newItemsCount, reconditionedCount };
+            }, [filteredDataWithDynamics]);
+
+            const getLocationColor = (loc) => {
+                if (!loc) return 'bg-gray-100 text-gray-600 border-gray-200';
+                const l = loc.trim();
+                if (l.includes('高雄') || l.includes('KH')) return 'bg-orange-50 text-orange-700 border-orange-200';
+                if (l.includes('深圳') || l.includes('博福') || l.includes('SZ')) return 'bg-blue-50 text-blue-700 border-blue-200';
+                if (l.includes('大連') || l.includes('DL')) return 'bg-cyan-50 text-cyan-700 border-cyan-200';
+                if (l.includes('台中') || l.includes('TC')) return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+                if (l.includes('基隆') || l.includes('KL')) return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+                if (l.includes('新光') || l.includes('新益')) return 'bg-purple-50 text-purple-700 border-purple-200';
+                if (l.includes('WH')) return 'bg-emerald-50 text-emerald-700 border-emerald-200'; 
+                if (l.includes('A0') || l.includes('A1')) return 'bg-teal-50 text-teal-700 border-teal-200'; 
+                if (l.includes('日陞') || l.includes('丹華') || l.includes('元昌') || l.includes('鴻邑')) return 'bg-pink-50 text-pink-700 border-pink-200';
+                return 'bg-slate-100 text-slate-700 border-slate-200';
+            };
+
+            const getEqpColor = (eqp) => {
+                if (!eqp) return 'bg-gray-100 text-gray-600 border-gray-200';
+                const e = eqp.toUpperCase();
+                if (e.includes('PROPEL') || e.includes('BOWTHR') || e.includes('STERNS')) return 'bg-sky-100 text-sky-800 border-sky-300';
+                if (e.includes('HYDW')) return 'bg-rose-100 text-rose-800 border-rose-300';
+                if (e.includes('PUMP') || e.includes('AIRCOM') || e.includes('FWGEN')) return 'bg-indigo-100 text-indigo-800 border-indigo-300';
+                if (e.includes('GE') || e.includes('MSBESB')) return 'bg-violet-100 text-violet-800 border-violet-300';
+                if (e.includes('ME') || e.includes('G-TC') || e.includes('M-TC') || e.includes('BLR')) return 'bg-amber-100 text-amber-800 border-amber-300';
+                if (e.includes('LADDER') || e.includes('ANCHOR') || e.includes('MONORA')) return 'bg-stone-100 text-stone-800 border-stone-300';
+                if (e.includes('LIFERAFT') || e.includes('FBB')) return 'bg-red-50 text-red-800 border-red-200';
+                return 'bg-slate-100 text-slate-700 border-slate-200';
+            };
+
+            const StatCard = ({ label, value, sub, valueColor = "text-slate-800", bgColor = "bg-white" }) => (
+                <div className={`${bgColor} p-4 rounded-xl shadow border border-slate-200 flex items-center gap-4 transition hover:shadow-md`}>
+                    <div className="p-3 bg-white/80 rounded-full shadow-sm flex items-center justify-center text-slate-600">
+                        <Icons.Zap className={valueColor.replace('text-', 'text-opacity-80 text-')} /> 
+                    </div>
+                    <div>
+                        <p className="text-sm text-slate-500 font-medium">{label}</p>
+                        <div className="flex items-baseline gap-1">
+                            <span className={`text-3xl font-extrabold ${valueColor}`}>{value}</span>
+                            <span className="text-xs text-slate-400 font-medium">{sub}</span>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const Badge = ({ text, color }) => (
+                <span className={`px-2 py-0.5 rounded text-xs font-bold whitespace-nowrap ${color}`}>{text}</span>
+            );
+
+            return (
+                <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-12">
+                    <Modal 
+                        isOpen={modalOpen} 
+                        onClose={closeModal} 
+                        item={selectedItem} 
+                        onUpload={handleImageUpload}
+                        imageUrl={selectedItem ? itemImages[selectedItem.id] : null}
+                        isUploading={isUploading}
+                        uploadStatus={uploadStatus}
+                        onUpdateUsage={handleUpdateUsage}
+                    />
+
+                    {/* Navbar */}
+                    <nav className="bg-slate-800 text-white p-4 shadow-lg sticky top-0 z-40">
+                        <div className="max-w-full px-4 mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="relative">
+                                    <Icons.Package className="h-6 w-6 text-emerald-400" />
+                                    {cloudStatus === 'connected' && (
+                                        <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full border border-slate-800" title="雲端連線正常"></div>
+                                    )}
+                                </div>
+                                <div className="flex flex-col">
+                                    <h1 className="text-xl font-bold tracking-wide">庫存協作平台 (照片上傳版)</h1>
+                                    <div className="text-[10px] text-slate-400 font-mono flex items-center gap-2">
+                                        {cloudStatus === 'connected' ? (
+                                            <span className="text-green-400 flex items-center gap-1"><Icons.Cloud className="w-3 h-3" /> 已連線</span>
+                                        ) : (
+                                            <button onClick={connectToFirebase} className="text-red-400 flex items-center gap-1 hover:text-red-300 transition" title="點擊重試連線">
+                                                <Icons.RefreshCw className="w-3 h-3" /> 離線 (點擊重連)
+                                            </button>
+                                        )}
+                                         | {dataStatus}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="flex flex-wrap items-center gap-2 text-sm">
+                                <button onClick={handleExport} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded transition font-bold shadow-sm hover:shadow" title="匯出表格">
+                                    <Icons.Download className="w-4 h-4" /> 匯出
+                                </button>
+                            </div>
+                        </div>
+                    </nav>
+
+                    <main className="max-w-full px-4 mx-auto p-4 md:p-6 space-y-6">
+                        {/* Statistics Cards */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <StatCard label="總項目數" value={stats.totalItems} sub="項" valueColor="text-blue-700" bgColor="bg-blue-50" />
+                            <StatCard label="總庫存量" value={stats.totalQty} sub="件" valueColor="text-emerald-700" bgColor="bg-emerald-50" />
+                            <StatCard label="總剩餘庫存" value={stats.totalRemaining} sub="件" valueColor="text-pink-700" bgColor="bg-pink-50" />
+                            <StatCard label="再生品庫存" value={stats.reconditionedCount} sub="件" valueColor="text-orange-700" bgColor="bg-orange-50" />
+                        </div>
+
+                        {/* Controls */}
+                        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col xl:flex-row gap-4 justify-between items-center">
+                            <div className="flex flex-col md:flex-row gap-3 w-full xl:w-auto flex-wrap">
+                                <div className="relative group w-full md:w-auto">
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><Icons.Search className="w-4 h-4" /></div>
+                                    <input type="text" placeholder="搜尋..." className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-full md:w-64 text-sm transition bg-slate-50 focus:bg-white" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                                </div>
+                                <select className="pl-3 pr-8 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-full md:w-auto bg-slate-50 focus:bg-white text-sm" value={selectedSeries} onChange={(e) => setSelectedSeries(e.target.value)}>
+                                    {seriesList.map(s => <option key={s} value={s}>{s === 'All' ? '所有系列' : s}</option>)}
+                                </select>
+                                {/* New Select for EQP */}
+                                <select className="pl-3 pr-8 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-full md:w-auto bg-slate-50 focus:bg-white text-sm" value={selectedEqp} onChange={(e) => setSelectedEqp(e.target.value)}>
+                                    {eqpList.map(e => <option key={e} value={e}>{e === 'All' ? '所有設備' : e}</option>)}
+                                </select>
+                                <select className="pl-3 pr-8 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-full md:w-auto bg-slate-50 focus:bg-white text-sm" value={selectedLocation} onChange={(e) => setSelectedLocation(e.target.value)}>
+                                    {locationList.map(l => <option key={l} value={l}>{l === 'All' ? '所有地點' : l}</option>)}
+                                </select>
+                                <select className="pl-3 pr-8 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-full md:w-auto bg-slate-50 focus:bg-white text-sm" value={selectedDecommissioned} onChange={(e) => setSelectedDecommissioned(e.target.value)}>
+                                    <option value="All">顯示全部 (含除役)</option>
+                                    <option value="Active">僅顯示現役</option>
+                                    <option value="Decommissioned">僅顯示除役</option>
+                                </select>
+                                <div className="flex gap-2 bg-slate-100 p-1 rounded-lg ml-auto">
+                                    <button onClick={() => setViewMode('table')} className={`p-2 rounded transition ${viewMode === 'table' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}><Icons.List className="h-5 w-5" /></button>
+                                    <button onClick={() => setViewMode('grid')} className={`p-2 rounded transition ${viewMode === 'grid' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}><Icons.LayoutGrid className="h-5 w-5" /></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Data Display */}
+                        {viewMode === 'table' ? (
+                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 uppercase tracking-wider">
+                                            <tr>
+                                                <th className="px-4 py-3 whitespace-nowrap w-16">ID</th>
+                                                <th className="px-4 py-3 whitespace-nowrap">系列</th>
+                                                <th className="px-4 py-3 whitespace-nowrap">設備</th>
+                                                <th className="px-4 py-3 whitespace-nowrap min-w-[300px]">品名規格</th>
+                                                <th className="px-4 py-3 whitespace-nowrap text-center">原始</th>
+                                                <th className="px-4 py-3 whitespace-nowrap text-center">耗用</th>
+                                                <th className="px-4 py-3 whitespace-nowrap text-center">採購</th>
+                                                <th className="px-4 py-3 whitespace-nowrap text-center">剩餘</th>
+                                                <th className="px-4 py-3 whitespace-nowrap">狀態</th>
+                                                <th className="px-4 py-3 whitespace-nowrap">地點</th>
+                                                <th className="px-4 py-3 whitespace-nowrap">PO No.</th>
+                                                <th className="px-4 py-3 whitespace-nowrap">備註</th>
+                                                <th className="px-4 py-3 whitespace-nowrap min-w-[150px]">庫存耗用動態</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {filteredDataWithDynamics.map((row) => {
+                                                const remaining = parseInt(row.qty || 0) - parseInt(row.consumedQty || 0) + parseInt(row.purchasedQty || 0);
+                                                const isDepleted = remaining <= 0;
+                                                return (
+                                                    <tr key={row.id} 
+                                                        onClick={() => openModal(row)} 
+                                                        className={`cursor-pointer transition duration-150 ${
+                                                            isDepleted ? 'bg-red-50 hover:bg-red-100' : 
+                                                            row.decommissioned === 'Y' ? 'opacity-60 bg-gray-100 grayscale hover:bg-gray-200' : 
+                                                            'hover:bg-blue-50/30'
+                                                        }`}
+                                                    >
+                                                        <td className="px-4 py-3 text-slate-400 font-mono text-xs">{row.id}</td>
+                                                        <td className="px-4 py-3 font-medium text-slate-600">{row.series}</td>
+                                                        <td className="px-4 py-3"><span className={`inline-block px-2 py-0.5 rounded text-xs font-bold border ${getEqpColor(row.eqp)}`}>{row.eqp}</span></td>
+                                                        <td className="px-4 py-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className={`font-bold text-base`}>{row.typeName}</div>
+                                                                {itemImages[row.id] && <Icons.Image className="w-4 h-4 text-blue-500 flex-shrink-0" />}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-center text-slate-500">{row.qty}</td>
+                                                        <td className="px-4 py-3 text-center font-bold text-orange-600">{row.consumedQty || 0}</td>
+                                                        <td className="px-4 py-3 text-center font-bold text-green-600">{row.purchasedQty || 0}</td>
+                                                        <td className="px-4 py-3 text-center">
+                                                            <span className={`font-bold text-lg ${isDepleted ? 'text-red-600' : 'text-blue-600'}`}>{remaining}</span>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            {row.status === '新品' ? <Badge text="新品" color="bg-green-100 text-green-700" /> : row.status === '再生' ? <Badge text="再生" color="bg-orange-100 text-orange-700" /> : <Badge text={row.status || '-'} color="bg-gray-100 text-gray-700" />}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-slate-600 font-medium">
+                                                            <div className={`flex items-center gap-1 px-2 py-1 rounded-md border ${getLocationColor(row.location)}`}><Icons.MapPin className="w-3 h-3 opacity-50" /><span className="truncate">{row.location}</span></div>
+                                                        </td>
+                                                        <td className="px-4 py-3 font-mono text-xs text-slate-500">{row.po}</td>
+                                                        <td className="px-4 py-3 text-xs text-slate-500 max-w-xs whitespace-normal break-words leading-relaxed">{row.remark}</td>
+                                                        <td className="px-4 py-3 text-xs text-blue-600 max-w-xs whitespace-normal break-words leading-relaxed font-medium">{row.usageDynamics}</td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {filteredDataWithDynamics.map((row) => {
+                                    const remaining = parseInt(row.qty || 0) - parseInt(row.consumedQty || 0) + parseInt(row.purchasedQty || 0);
+                                    return (
+                                        <div key={row.id} onClick={() => openModal(row)} 
+                                            className={`cursor-pointer p-6 rounded-xl shadow-sm border border-slate-100 hover:shadow-lg transition duration-300 flex flex-col justify-between 
+                                            ${remaining <= 0 ? 'bg-red-50' : 'bg-white'} 
+                                            ${row.decommissioned === 'Y' ? 'opacity-60 bg-gray-50 grayscale' : ''}`}
+                                        >
+                                            <div>
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold mb-2 inline-block">{row.series}</span>
+                                                    <div className="flex items-center gap-2">{itemImages[row.id] && <Icons.Image className="w-4 h-4 text-blue-500" />}<span className="text-slate-300 font-mono text-xs">#{row.id}</span></div>
+                                                </div>
+                                                <h3 className={`font-bold text-lg leading-tight mb-3 ${row.decommissioned === 'Y' ? 'text-slate-500' : 'text-slate-900'}`}>{row.typeName}</h3>
+                                                <div className="flex flex-wrap gap-2 mb-4">
+                                                    <span className={`px-2 py-0.5 rounded text-xs font-bold border ${getEqpColor(row.eqp)}`}>{row.eqp}</span>
+                                                    <span className={`px-2 py-0.5 rounded text-xs font-bold ${row.status === '新品' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{row.status || '未標示'}</span>
+                                                </div>
+                                                <div className="flex justify-between border-b border-slate-200 pb-1 mb-2">
+                                                    <span className="text-slate-400">剩餘數量</span>
+                                                    <span className={`font-bold text-lg ${remaining <= 0 ? 'text-red-600' : 'text-slate-800'}`}>{remaining} / {row.qty}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center"><span className="text-slate-400">地點</span><span className={`px-2 py-0.5 rounded text-xs font-medium border ${getLocationColor(row.location)}`}>{row.location}</span></div>
+                                                
+                                                {row.remark && (
+                                                    <div className="mt-3 bg-yellow-50 p-2 rounded border border-yellow-100 text-xs text-yellow-800 flex gap-2 items-start">
+                                                        <Icons.Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                                                        <span>{row.remark}</span>
+                                                    </div>
+                                                )}
+                                                
+                                                {row.usageDynamics && (
+                                                    <div className="mt-2 bg-blue-50 p-2 rounded border border-blue-100 text-xs text-blue-800 flex gap-2 items-start">
+                                                        <Icons.FileText className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                                                        <span>{row.usageDynamics}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
