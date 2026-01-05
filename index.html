@@ -1,23 +1,22 @@
-
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>機配件共備庫存清單 (Team Sync)</title>
+    <title>機配件共備庫存清單 (Editor_LEE)</title>
     
     <!-- 1. 載入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- 2. 載入 React 和 ReactDOM -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- 2. 載入 React 和 ReactDOM (cdnjs 穩定版) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
     
-    <!-- 3. 載入 Babel -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- 3. 載入 Babel (cdnjs 穩定版) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js" crossorigin="anonymous"></script>
 
-    <!-- 4. 載入 Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- 4. 載入 Lucide Icons (使用 unpkg 穩定版本) -->
+    <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
 
     <style>
         body { font-size: 14px; }
@@ -188,9 +187,9 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
     <div id="root"></div>
 
     <script type="text/babel" data-type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query, writeBatch, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, writeBatch, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const { useState, useMemo, useRef, useEffect } = React;
 
@@ -342,7 +341,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                     remark: getVal('REMARK'),
                     decommissioned: getVal('DECOMMISSIONED'),
                     consumedQty: 0, 
-                    purchasedQty: 0, // Added purchasedQty
+                    purchasedQty: 0, 
                     usageDynamics: '' 
                 };
                 
@@ -421,7 +420,6 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
             }, [item]);
 
             const handleSaveUsage = async () => {
-                // Validation rule: Editing consumed or purchased quantity requires filling usage dynamics
                 const consumedChanged = localConsumedQty !== (item.consumedQty || '0');
                 const purchasedChanged = localPurchasedQty !== (item.purchasedQty || '0');
                 
@@ -632,6 +630,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                 }
             };
 
+            // 1. Initial Load & Connect
             useEffect(() => {
                 const embeddedCsv = document.getElementById('default-csv-data');
                 if (embeddedCsv) {
@@ -650,9 +649,11 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                 }
             }, []);
 
+            // 2. Sync Images AND Dynamics
             useEffect(() => {
                 if (!isFirebaseAvailable || !user) return;
 
+                // Listen to Images
                 const qImages = getImagesCollection(db);
                 const unsubImages = onSnapshot(qImages, (snapshot) => {
                     const images = {};
@@ -662,6 +663,10 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                     setItemImages(images);
                 });
 
+                // Listen to Inventory Data (for dynamics update)
+                // Note: We are using a hybrid approach. The base list is CSV, 
+                // but we fetch "dynamics" updates from Firestore `inventory` collection.
+                // We use the same collection path structure logic.
                 let qInventory;
                 if (envAppId) {
                     qInventory = collection(db, 'artifacts', envAppId, 'public', 'data', 'inventory');
@@ -808,20 +813,24 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
             };
 
             const seriesList = useMemo(() => {
-                return ['All', ...new Set(inventoryData.map(item => item.series).filter(Boolean))].sort();
+                const list = [...new Set(inventoryData.map(item => item.series).filter(Boolean))].sort();
+                return ['All', ...list];
             }, [inventoryData]);
             
+            // New Memo for EQP list
             const eqpList = useMemo(() => {
                 const uniqueEqp = [...new Set(inventoryData.map(item => item.eqp).filter(Boolean))].sort();
                 return ['All', ...uniqueEqp];
             }, [inventoryData]);
 
             const locationList = useMemo(() => {
-                return ['All', ...new Set(inventoryData.map(item => item.location).filter(Boolean))].sort();
+                const list = [...new Set(inventoryData.map(item => item.location).filter(Boolean))].sort();
+                return ['All', ...list];
             }, [inventoryData]);
             
             const statusList = useMemo(() => {
-                return ['All', ...new Set(inventoryData.map(item => item.status).filter(Boolean))].sort();
+                const list = [...new Set(inventoryData.map(item => item.status).filter(Boolean))].sort();
+                return ['All', ...list];
             }, [inventoryData]);
 
             const inventoryDataWithDynamics = useMemo(() => {
@@ -973,10 +982,10 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                     <main className="max-w-full px-4 mx-auto p-4 md:p-6 space-y-6">
                         {/* Statistics Cards */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <StatCard label="總項目數" value={stats.totalItems} sub="項" valueColor="text-blue-700" bgColor="bg-blue-50" />
-                            <StatCard label="總庫存量" value={stats.totalQty} sub="件" valueColor="text-emerald-700" bgColor="bg-emerald-50" />
+                            <StatCard label="總庫存量" value={stats.totalQty} sub="件" valueColor="text-blue-700" bgColor="bg-blue-50" />
                             <StatCard label="總剩餘庫存" value={stats.totalRemaining} sub="件" valueColor="text-pink-700" bgColor="bg-pink-50" />
-                            <StatCard label="再生品庫存" value={stats.reconditionedCount} sub="件" valueColor="text-orange-700" bgColor="bg-orange-50" />
+                            <StatCard label="新品庫存" value={stats.newItemsCount} sub="項" valueColor="text-purple-700" bgColor="bg-purple-50" />
+                            <StatCard label="再生品庫存" value={stats.reconditionedCount} sub="項" valueColor="text-orange-700" bgColor="bg-orange-50" />
                         </div>
 
                         {/* Controls */}
