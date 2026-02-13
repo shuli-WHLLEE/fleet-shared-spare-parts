@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>機配件共備庫存清單 (Editor_LEE)</title>
+    <title>機配件共備庫存清單 (Team Sync)</title>
     
     <!-- 1. 載入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -52,7 +52,6 @@
     <!-- ★★★ 預設內建資料庫 (直接顯示用) ★★★ -->
     <script id="default-csv-data" type="text/csv">
 ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
-0,範例,ME,"主機缸套",1,,深圳博福,,,
 1,未知,BOWTHR,"前車葉片(L:770mm/W:980mm/Root:328mm)",9,,台中碼頭,,,
 2,未知,HYDW-M,捲揚機液壓馬達 type: K3VG112,1,,台中碼頭,,,
 3,未知,HYDW-M,錨機液壓馬達 type: K3VG180,1,,台中碼頭,,,
@@ -66,7 +65,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
 11,WH31系列,GE,發電機活塞,1,再生,深圳博福,,再生品,
 12,WH31系列,LADDER,舷梯,1,再生,深圳博福,,2024.12.20日WH317更換右舷舷梯使用一個，剩餘一架已修復,
 13,WH31系列,BLR,小 DRAIN COOLER 膽芯,1,新品,深圳博福,,新品,
-14,WH31系列,PROPELL,螺旋槳保護帽,2,新品,深圳博福,,"新品（尺寸1000mm*1000mm*650mm *300kgs ）",
+14,WH31系列,PROPEL,螺旋槳保護帽,2,新品,深圳博福,,"新品（尺寸1000mm*1000mm*650mm *300kgs ）",
 15,WH50系列,GE,發電機活塞頭,12,再生,深圳博福,,再生品,
 16,WH50系列,AIRCOM,主空壓機（不包括馬達）,1,新品,深圳博福,,新品,
 17,WH50系列,PLA-EXCH,淡水冷卻器端蓋板（前+後),1,再生,深圳博福,,鈦合金鑲套,
@@ -117,9 +116,9 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
 62,WH31系列,MEPC,Repair Kit for air reducing valve,1,,WH311,,91161-1,
 63,WH51系列,MSBESB,前俥ACB (NW40H3),1,,上海施耐德,,7574-1,徵用一台為WH513損壞開關替換,
 64,WH51系列,MSBESB,電機ACB (NW50H2),5,,上海施耐德,,7574-0,徵用一台為WH505損壞開關替換,
-65,WH28系列,HYDW-M,電動錨纜機馬達電機,2,新品,上海大連萬方,,兩台新品,
-66,WH28系列,HYDW-M,電動錨纜機馬達電機,3,再生,上海大連萬方,,原從WH288上取下，舊品未翻新,
-67,WH31系列,HYDW-M,液壓油泵(T6DC050-031),1,,上海大連萬方,348682,"923-0 ,WH31X甲板機械共備配件,2022.05從博福取回，需配公制螺絲",
+65,WH28系列,HYDW-M,電動錨纜機馬達電機,2,新品,廣州大連萬方,,兩台新品,
+66,WH28系列,HYDW-M,電動錨纜機馬達電機,3,再生,廣州大連萬方,,原從WH288上取下，舊品未翻新,
+67,WH31系列,HYDW-M,液壓油泵(T6DC050-031),1,,廣州大連萬方,348682,"923-0 ,WH31X甲板機械共備配件,2022.05從博福取回，需配公制螺絲",
 68,WH50系列,BOWTHR,Bow thruster葉片 HNO.835~839,1,,台中碼頭,,台中碼頭,
 69,WH27系列,GE,電子調速器 (NZ-61),1,,香港嘉銘,,2048-0 , Maker: YANMAR,
 70,WH50系列,GE,電子調速器 (RHD-10),1,,香港嘉銘,,3248-0, Maker: YANMAR,
@@ -135,26 +134,26 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
 80,WH17系列,ME,ME AIR COOLER,1,再生,高雄新益成,,WH-172  主機冷卻器本體+2前後端蓋（端蓋狀況不佳）,
 81,WH50系列,FBB,FLEETBOARDBAND 250 - JUE-251(JRC FLEETBOARDBAND 250 - JUE-251),1,新品,高雄新益成,,81818-0,新品,
 82,WH35系列,GE,電子調速器(UG-25+) (woodward 8528-107),1,再生,新北瑞芳鴻邑,,鴻邑庫存調速器轉給WH358使用，並從往WH353卸下一台檢修,
-83,WH10系列,PROPELL,備用Propeller (13074KG/5.3M),1,新品,高雄碼頭,,,
-84,WH27/17系列,PROPELL,備用Propeller (22141KG/6.5M),1,新品,高雄碼頭,,WH28X備用螺槳簽呈說明WH17X可與WH27X共用(PITCH相同),
-85,WH31系列,PROPELL,備用Propeller (36812KG/7.19M),1,新品,高雄碼頭,,,
-86,WH50系列,PROPELL,備用Propeller (56477KG/8.0M),1,新品,高雄碼頭,,,
-87,WH51系列,PROPELL,備用Propeller (56477KG/8.1M),1,新品,高雄碼頭,,新俥葉已轉出~目前存放俥葉為原WH516.5可用舊品(3/25),
-88,WH32系列,PROPELL,備用Propeller (54840KG/7.8M),1,新品,高雄碼頭,,2021.05.17從WH328高雄卸岸,
-89,WH28/29系列,PROPELL,備用Propeller (28180KG/7.1M),1,新品,高雄碼頭,,,
-90,WH35系列,PROPELL,備用Propeller (54840KG/7.8M),1,新品,高雄碼頭,,與WH32同型,
-91,WH33系列,PROPELL,備用Propeller (32820KG/7.8M),1,新品,高雄碼頭,,20231227搭台船五號泊船停靠65w轉入高碼,
-92,SHI系列A07~A20),PROPELL,備用Propeller (68500KG/9.6M),1,新品,高雄碼頭,,,
-93,HHI系列(A01~A06),PROPELL,備用Propeller (80320KG/9.6M),1,新品,高雄碼頭,,20231219搭大新輪泊船停靠63W轉入高碼,
-94,WH23系列,PROPELL,備用Propeller  cap,1,,高雄碼頭,,PBCF汰換下/位於保養廠南側,Y
-95,WH321~35系列,PROPELL,備用Propeller  cap,1,,高雄碼頭,,PBCF汰換下,位於保養廠南側,
-96,WH36~37系列,PROPELL,備用Propeller  cap,1,,高雄碼頭,,PBCF汰換下,位於保養廠南側,
-97,WH31系列,PROPELL,備用Propeller  cap,1,,高雄碼頭,,PBCF汰換下,位於保養廠南側,
-98,WH50系列,PROPELL,備用Propeller  cap,1,,高雄碼頭,,PBCF汰換下,位於保養廠南側,
-99,WH50系列,PROPELL,備用Propeller  cap,1,新品,高雄碼頭,,新船備品(木箱),位於保養廠加油平臺(至於下),
-100,WH60系列,PROPELL,備用Propeller  cap,1,新品,高雄碼頭,,新船備品(無木箱)/位於保養廠加油平臺(至於上),Y
-101,WH10系列,PROPELL,備用Propeller  cap,1,新品,高雄碼頭,,新品(木箱)置於下方,位於保養廠南側,
-102,WH27系列,PROPELL,備用Propeller  cap,1,新品,高雄碼頭,,新品(木箱)置於上方,位於保養廠南側,
+83,WH10系列,PROPELL,備用Propeller(13074KG/5.3M),1,新品,高雄碼頭,,,
+84,WH27/17系列,PROPELL,備用Propeller(22141KG/6.5M),1,新品,高雄碼頭,,WH28X備用螺槳簽呈說明WH17X可與WH27X共用(PITCH相同),
+85,WH31系列,PROPEL,備用Propeller(36812KG/7.19M),1,新品,高雄碼頭,,,
+86,WH50系列,PROPEL,備用Propeller(56477KG/8.0M),1,新品,高雄碼頭,,,
+87,WH51系列,PROPELL,備用Propeller(56477KG/8.1M),1,新品,高雄碼頭,,新俥葉已轉出~目前存放俥葉為原WH516.5可用舊品(3/25),
+88,WH32系列,PROPELL,備用Propeller(54840KG/7.8M),1,新品,高雄碼頭,,2021.05.17從WH328高雄卸岸,
+89,WH28/29系列,PROPELL,備88180KG/7.1M),1,新品,高雄碼頭,,,
+90,WH35系列,PROPELL,備用Propeller(54840KG/7.8M),1,新品,高雄碼頭,,與WH32同型,
+91,WH33系列,PROPEL,備用Propeller(32820KG/7.8M),1,新品,高雄碼頭,,20231227搭台船五號泊船停靠65w轉入高碼,
+92,SHI系列A07~A20),PROPELL,備用Propeller(68500KG/9.6M),1,新品,高雄碼頭,,,
+93,HHI系列(A01~A06),PROPELL,備用Propeller(80320KG/9.6M),1,新品,高雄碼頭,,20231219搭大新輪泊船停靠63W轉入高碼,
+94,WH23系列,PROPEL,備用Propeller cap,1,,高雄碼頭,,PBCF汰換下/位於保養廠南側,Y
+95,WH321~35系列,PROPELL,備用Propeller cap,1,,高雄碼頭,,PBCF汰換下,位於保養廠南側,
+96,WH36~37系列,PROPELL,備用Propeller cap,1,,高雄碼頭,,PBCF汰換下,位於保養廠南側,
+97,WH31系列,PROPEL,備用Propeller cap,1,,高雄碼頭,,PBCF汰換下,位於保養廠南側,
+98,WH50系列,PROPEL,備用Propeller cap,1,,高雄碼頭,,PBCF汰換下,位於保養廠南側,
+99,WH50系列,PROPEL,備用Propeller cap,1,新品,高雄碼頭,,新船備品(木箱),位於保養廠加油平臺(至於下),
+100,WH60系列,PROPEL,備用Propeller cap,1,新品,高雄碼頭,,新船備品(無木箱)/位於保養廠加油平臺(至於上),Y
+101,WH10系列,PROPELL,備用Propeller cap,1,新品,高雄碼頭,,新品(木箱)置於下方,位於保養廠南側,
+102,WH27系列,PROPELL,備用Propeller cap,1,新品,高雄碼頭,,新品(木箱)置於上方,位於保養廠南側,
 103,未知,M-TC,主機透平出口外殼,1,再生,高雄碼頭,,可用舊品(木箱),新益成整修後2016/08/29移入,置於c棟1F,
 104,未知,M-TC,主機透平進口外殼,1,再生,高雄碼頭,,可用舊品(木箱),新益成整修後2016/08/29移入,置於c棟1F,
 105,WH30系列,HYDW-M,油壓馬達,2,,高雄碼頭,,brand:Kawasaki model:HMKC200T3/188/80w1**A72RJ203A  520KG長103CM寬83CM高90CM  2件,Y
@@ -170,13 +169,13 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
 115,WH32/35/36/37系列,HYDW-M,錨機馬達(左),1,新品,WH351,,錨機風險配件-OB,
 116,WH32/35/36/37系列,HYDW-M,錨機馬達(右),1,新品,WH355,,錨機風險配件-OB,
 117,WH51系列,HYDW-M,"HYDR. OIL MOTOR (TYPE:HMC200-S-188-60-FM4-CS/M4:PL717;M1,2,3:PL830)",1,再生,WH511,,WH513 左舷錨機液壓馬達緊急採購2手品更換，；換下來的舊品送至大連萬芳廣州車間再生(ID-8524-1 ),
-118,HHI系列(A01~A06),HYDW-M,ELECTRIC MOTOR (PPW-28MB49Q),1,新品,上海大連萬方,520467,WHA01-A20錨機風險配件統購，A01-A06共備一組MOTOR,
-119,HHI系列(A01~A06),HYDW-M,Overload coupling,1,新品,上海大連萬方,520467,WHA01-A20錨機風險配件統購，A01-A06共備一組Overload coupling,
-120,SHI系列A07~A20),HYDW-M,"BRAKE-MOTOR PPW-28MB44Q/B5/IC410/IP56/140KW-2P=4",1,新品,上海大連萬方,520468,WHA01-A20錨機風險配件統購，A07-A20共備2組MOTOR,
-121,SHI系列A07~A20),HYDW-M,OVERLOAD COUPLING,1,新品,上海大連萬方,520468,WHA01-A20錨機風險配件統購，A07-A20共備2組Overload coupling,
+118,HHI系列(A01~A06),HYDW-M,ELECTRIC MOTOR (PPW-28MB49Q),1,新品,廣州大連萬方,520467,WHA01-A20錨機風險配件統購，A01-A06共備一組MOTOR,
+119,HHI系列(A01~A06),HYDW-M,Overload coupling,1,新品,廣州大連萬方,520467,WHA01-A20錨機風險配件統購，A01-A06共備一組Overload coupling,
+120,SHI系列A07~A20),HYDW-M,"BRAKE-MOTOR PPW-28MB44Q/B5/IC410/IP56/140KW-2P=4",1,新品,廣州大連萬方,520468,WHA01-A20錨機風險配件統購，A07-A20共備2組MOTOR,
+121,SHI系列A07~A20),HYDW-M,OVERLOAD COUPLING,1,新品,廣州大連萬方,520468,WHA01-A20錨機風險配件統購，A07-A20共備2組Overload coupling,
 122,SHI系列A07~A20),HYDW-M,"BRAKE-MOTOR PPW-28MB44Q/B5/IC410/IP56/140KW-2P=4",1,新品,深圳博福,520468,WHA01-A20錨機風險配件統購，A07-A20共備2組MOTOR,
 123,SHI系列A07~A20),HYDW-M,OVERLOAD COUPLING,1,新品,深圳博福,520468,WHA01-A20錨機風險配件統購，A07-A20共備2組Overload coupling,
-124,SHI系列A07~A20),AN-HEEL,REVERSIBLE PROPELLLER PUMP (MODEL:V400A),1,新品,深圳博福,534189,SHI系列船ANTI HEELING PUMP WITH MOTOR共備配件；(尚未出貨，約2月初出貨),
+124,SHI系列A07~A20),AN-HEEL,REVERSIBLE PROPELLER PUMP (MODEL:V400A),1,新品,深圳博福,534189,SHI系列船ANTI HEELING PUMP WITH MOTOR共備配件；(尚未出貨，約2月初出貨),
 125,WH32/35/36/37系列,PUMP,MGPE泵整組,2,新品,基隆元昌,519327,全新品，P/O.519327 & P/O.519328,
 126,WH32/35/36/37系列,PUMP,MGPE泵整組,2,新品,深圳博福,519325,全新品，P/O.519325 & P/O.519326,
 127,WH51系列,HYDW-M,Hydraulic Motor (HMC200-S),1,新品,WH511,502240,2024船隊甲機共備配件,
@@ -403,6 +402,9 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
             Save: (props) => <LucideIcon name="Save" {...props} />,
             Box: (props) => <LucideIcon name="Box" {...props} />,
             PlusSquare: (props) => <LucideIcon name="PlusSquare" {...props} />,
+            MessageCircle: (props) => <LucideIcon name="MessageCircle" {...props} />,
+            Send: (props) => <LucideIcon name="Send" {...props} />,
+            Bot: (props) => <LucideIcon name="Bot" {...props} />,
         };
 
         const Modal = ({ isOpen, onClose, item, onUpload, imageUrl, isUploading, uploadStatus, onUpdateUsage }) => {
@@ -602,6 +604,26 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
             const [isUploading, setIsUploading] = useState(false);
             const [uploadStatus, setUploadStatus] = useState('上傳中...');
             const [cloudStatus, setCloudStatus] = useState('offline');
+
+            // --- Chat Assistant State ---
+            const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+            const [assistantInput, setAssistantInput] = useState('');
+            const [assistantMessages, setAssistantMessages] = useState([
+                { role: 'assistant', text: '您好！我是共備庫存客服小幫手。請告訴我您想尋找的「設備代碼」、「系列」或「品名關鍵字」，我會為您查詢數量與位置。' }
+            ]);
+            const chatEndRef = useRef(null);
+
+            // 新增：處理關閉客服小幫手的邏輯
+            const handleCloseAssistant = () => {
+                setIsAssistantOpen(false);
+                // 延遲 300ms 等待縮下動畫結束後，還原初始狀態
+                setTimeout(() => {
+                    setAssistantInput('');
+                    setAssistantMessages([
+                        { role: 'assistant', text: '您好！我是共備庫存客服小幫手。請告訴我您想尋找的「設備代碼」、「系列」或「品名關鍵字」，我會為您查詢數量與位置。' }
+                    ]);
+                }, 300);
+            };
 
             const connectToFirebase = async () => {
                 if (userFirebaseConfig.apiKey.includes("請在此填入")) {
@@ -886,6 +908,49 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                 return { totalItems, totalQty, totalRemaining, newItemsCount, reconditionedCount };
             }, [filteredDataWithDynamics]);
 
+            // --- Chat Assistant Auto Scroll ---
+            useEffect(() => {
+                if (isAssistantOpen && chatEndRef.current) {
+                    chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, [assistantMessages, isAssistantOpen]);
+
+            // --- Chat Assistant Logic ---
+            const handleSendAssistantMessage = () => {
+                if (!assistantInput.trim()) return;
+                
+                const query = assistantInput.trim().toLowerCase();
+                const newMessages = [...assistantMessages, { role: 'user', text: assistantInput.trim() }];
+                setAssistantMessages(newMessages);
+                setAssistantInput('');
+
+                // 搜尋邏輯
+                const results = inventoryDataWithDynamics.filter(item => 
+                    (item.typeName && item.typeName.toLowerCase().includes(query)) ||
+                    (item.eqp && item.eqp.toLowerCase().includes(query)) ||
+                    (item.series && item.series.toLowerCase().includes(query)) ||
+                    (item.po && item.po.toLowerCase().includes(query))
+                );
+
+                setTimeout(() => {
+                    let replyText = '';
+                    if (results.length === 0) {
+                        replyText = `抱歉，目前庫存中找不到與「${query}」相關的品項。`;
+                    } else {
+                        const topResults = results.slice(0, 5); // 最多顯示 5 筆
+                        replyText = `為您找到 ${results.length} 筆資料：\n\n`;
+                        topResults.forEach((item, index) => {
+                            const remaining = parseInt(item.qty || 0) - parseInt(item.consumedQty || 0) + parseInt(item.purchasedQty || 0);
+                            replyText += `${index + 1}. 【${item.series}】${item.typeName}\n   📍 位置：${item.location}\n   📦 剩餘數量：${remaining}\n\n`;
+                        });
+                        if (results.length > 5) {
+                            replyText += `...還有 ${results.length - 5} 筆未顯示，建議您使用畫面上方的主搜尋框查看完整清單哦！`;
+                        }
+                    }
+                    setAssistantMessages(prev => [...prev, { role: 'assistant', text: replyText }]);
+                }, 500); // 模擬稍微思考延遲
+            };
+
             const getLocationColor = (loc) => {
                 if (!loc) return 'bg-gray-100 text-gray-600 border-gray-200';
                 const l = loc.trim();
@@ -904,7 +969,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
             const getEqpColor = (eqp) => {
                 if (!eqp) return 'bg-gray-100 text-gray-600 border-gray-200';
                 const e = eqp.toUpperCase();
-                if (e.includes('PROPELL') || e.includes('BOWTHR') || e.includes('STERNS')) return 'bg-sky-100 text-sky-800 border-sky-300';
+                if (e.includes('PROPEL') || e.includes('BOWTHR') || e.includes('STERNS')) return 'bg-sky-100 text-sky-800 border-sky-300';
                 if (e.includes('HYDW')) return 'bg-rose-100 text-rose-800 border-rose-300';
                 if (e.includes('PUMP') || e.includes('AIRCOM') || e.includes('FWGEN')) return 'bg-indigo-100 text-indigo-800 border-indigo-300';
                 if (e.includes('GE') || e.includes('MSBESB')) return 'bg-violet-100 text-violet-800 border-violet-300';
@@ -934,7 +999,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
             );
 
             return (
-                <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-12">
+                <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-12 relative">
                     <Modal 
                         isOpen={modalOpen} 
                         onClose={closeModal} 
@@ -957,7 +1022,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                                     )}
                                 </div>
                                 <div className="flex flex-col">
-                                    <h1 className="text-xl font-bold tracking-wide">機配件共備庫存清單</h1>
+                                    <h1 className="text-xl font-bold tracking-wide">庫存協作平台 (照片上傳版)</h1>
                                     <div className="text-[10px] text-slate-400 font-mono flex items-center gap-2">
                                         {cloudStatus === 'connected' ? (
                                             <span className="text-green-400 flex items-center gap-1"><Icons.Cloud className="w-3 h-3" /> 已連線</span>
@@ -1129,6 +1194,64 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                             </div>
                         )}
                     </main>
+
+                    {/* Chat Assistant Toggle Button */}
+                    <button 
+                        onClick={() => isAssistantOpen ? handleCloseAssistant() : setIsAssistantOpen(true)}
+                        className={`fixed bottom-6 right-6 p-4 rounded-full shadow-2xl z-50 transition-all duration-300 transform hover:scale-110 ${isAssistantOpen ? 'bg-slate-700 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                    >
+                        {isAssistantOpen ? <Icons.X className="w-6 h-6" /> : <Icons.MessageCircle className="w-6 h-6" />}
+                    </button>
+
+                    {/* Chat Assistant Panel */}
+                    <div className={`fixed bottom-24 right-6 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 flex flex-col transition-all duration-300 overflow-hidden ${isAssistantOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-10 pointer-events-none'}`} style={{ height: '450px', maxHeight: '70vh' }}>
+                        {/* Header */}
+                        <div className="bg-blue-600 text-white p-3 flex justify-between items-center shrink-0">
+                            <div className="flex items-center gap-2">
+                                <Icons.Bot className="w-5 h-5" />
+                                <span className="font-bold">共備庫存小幫手</span>
+                            </div>
+                            <button onClick={handleCloseAssistant} className="text-blue-200 hover:text-white transition">
+                                <Icons.X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        
+                        {/* Messages Area */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
+                            {assistantMessages.map((msg, idx) => (
+                                <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                                    <div className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap leading-relaxed shadow-sm ${
+                                        msg.role === 'user' 
+                                            ? 'bg-blue-600 text-white rounded-br-none' 
+                                            : 'bg-white border border-slate-200 text-slate-700 rounded-bl-none'
+                                    }`}>
+                                        {msg.text}
+                                    </div>
+                                </div>
+                            ))}
+                            <div ref={chatEndRef} />
+                        </div>
+
+                        {/* Input Area */}
+                        <div className="p-3 bg-white border-t border-slate-200 flex gap-2 shrink-0">
+                            <input 
+                                type="text" 
+                                className="flex-1 border border-slate-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+                                placeholder="輸入設備代碼或品名..."
+                                value={assistantInput}
+                                onChange={(e) => setAssistantInput(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSendAssistantMessage()}
+                            />
+                            <button 
+                                onClick={handleSendAssistantMessage}
+                                disabled={!assistantInput.trim()}
+                                className="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shrink-0"
+                            >
+                                <Icons.Send className="w-4 h-4 ml-0.5" />
+                            </button>
+                        </div>
+                    </div>
+
                 </div>
             );
         };
