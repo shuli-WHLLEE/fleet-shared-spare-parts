@@ -609,7 +609,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
             const [isAssistantOpen, setIsAssistantOpen] = useState(false);
             const [assistantInput, setAssistantInput] = useState('');
             const [assistantMessages, setAssistantMessages] = useState([
-                { role: 'assistant', text: '您好！我是共備庫存客服小幫手。請告訴我您想尋找的「設備代碼」、「系列」或「品名關鍵字」，我會為您查詢數量與位置。' }
+                { role: 'assistant', text: '👋 您好！我是庫存智慧助理。\n\n我可以幫您：\n1. 多關鍵字搜尋 (例如：「高雄 馬達」、「WH50 缺貨」)\n2. 查詢特定地點或設備\n3. 快速確認剩餘數量\n\n請問今天想找什麼呢？' }
             ]);
             const chatEndRef = useRef(null);
 
@@ -620,7 +620,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                 setTimeout(() => {
                     setAssistantInput('');
                     setAssistantMessages([
-                        { role: 'assistant', text: '您好！我是共備庫存客服小幫手。請告訴我您想尋找的「設備代碼」、「系列」或「品名關鍵字」，我會為您查詢數量與位置。' }
+                        { role: 'assistant', text: '👋 您好！我是庫存智慧助理。\n\n我可以幫您：\n1. 多關鍵字搜尋 (例如：「高雄 馬達」、「WH50 缺貨」)\n2. 查詢特定地點或設備\n3. 快速確認剩餘數量\n\n請問今天想找什麼呢？' }
                     ]);
                 }, 300);
             };
@@ -855,6 +855,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                 return ['All', ...list];
             }, [inventoryData]);
 
+            // Merge local data with cloud dynamics
             const inventoryDataWithDynamics = useMemo(() => {
                 return inventoryData.map(item => {
                     const cloud = cloudData[item.id] || {};
@@ -879,7 +880,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                         (item.decommissioned === 'Y' && '除役'.includes(term));
                     
                     const matchesSeries = selectedSeries === 'All' || item.series === selectedSeries;
-                    const matchesEqp = selectedEqp === 'All' || item.eqp === selectedEqp;
+                    const matchesEqp = selectedEqp === 'All' || item.eqp === selectedEqp; // New Logic
                     const matchesLocation = selectedLocation === 'All' || item.location === selectedLocation;
                     const matchesStatus = selectedStatus === 'All' || 
                         (selectedStatus === 'Empty' ? !item.status : item.status === selectedStatus);
@@ -919,36 +920,101 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
             const handleSendAssistantMessage = () => {
                 if (!assistantInput.trim()) return;
                 
-                const query = assistantInput.trim().toLowerCase();
-                const newMessages = [...assistantMessages, { role: 'user', text: assistantInput.trim() }];
+                const rawInput = assistantInput.trim();
+                
+                // 1. 定義停用詞/贅字 (Stop Words)
+                const stopWords = [
+                    '在哪裡', '在哪', '在什麼地方', '位置', '放在哪', // 地點相關
+                    '還有', '剩多少', '剩餘', '數量', '多少', '幾顆', '幾個', // 數量相關
+                    '幫我找', '查詢', '搜尋', '找一下', '請問', '請教', '我想找', // 動作
+                    '有嗎', '有沒有', '有無', // 存在與否
+                    '的', '嗎', '呢', '了', '是', '個', '筆', '啊', '哦' // 語助詞
+                ];
+                
+                // 2. 移除停用詞
+                let cleanInput = rawInput;
+                stopWords.forEach(word => {
+                    cleanInput = cleanInput.split(word).join(' ');
+                });
+
+                // 3. 分割關鍵字
+                const keywords = cleanInput.toLowerCase().split(/\s+/).filter(k => k.trim().length > 0);
+
+                const newMessages = [...assistantMessages, { role: 'user', text: rawInput }];
                 setAssistantMessages(newMessages);
                 setAssistantInput('');
-
-                // 搜尋邏輯
-                const results = inventoryDataWithDynamics.filter(item => 
-                    (item.typeName && item.typeName.toLowerCase().includes(query)) ||
-                    (item.eqp && item.eqp.toLowerCase().includes(query)) ||
-                    (item.series && item.series.toLowerCase().includes(query)) ||
-                    (item.po && item.po.toLowerCase().includes(query))
-                );
-
+                
+                // Simulate thinking
                 setTimeout(() => {
+                     if (keywords.length === 0) {
+                        setAssistantMessages(prev => [...prev, { role: 'assistant', text: '抱歉，我沒聽懂您想找什麼。請試著輸入「設備名稱」或「編號」，例如：「主機」、「馬達」。' }]);
+                        return;
+                     }
+
+                    // Logic: AND condition for all keywords
+                    const results = inventoryDataWithDynamics.filter(item => {
+                        const remaining = parseInt(item.qty || 0) - parseInt(item.consumedQty || 0) + parseInt(item.purchasedQty || 0);
+                        
+                        // Create a search corpus for this item
+                        const itemSearchableText = [
+                            item.series,
+                            item.eqp,
+                            item.typeName,
+                            item.location,
+                            item.po,
+                            item.status,
+                            item.remark,
+                            item.usageDynamics,
+                            // Add remaining qty as string for search
+                            String(remaining)
+                        ].join(' ').toLowerCase();
+
+                        // Check if every keyword matches
+                        return keywords.every(kw => {
+                            // Smart Filters
+                            if (['缺貨', '無庫存', '沒貨', 'out of stock'].includes(kw)) {
+                                return remaining <= 0;
+                            }
+                            if (['有貨', '庫存', 'in stock'].includes(kw)) {
+                                return remaining > 0;
+                            }
+                            if (['除役', 'decommissioned'].includes(kw)) {
+                                return item.decommissioned === 'Y';
+                            }
+                            if (['現役', 'active'].includes(kw)) {
+                                return item.decommissioned !== 'Y';
+                            }
+                            
+                            // Default text match
+                            return itemSearchableText.includes(kw);
+                        });
+                    });
+
                     let replyText = '';
                     if (results.length === 0) {
-                        replyText = `抱歉，目前庫存中找不到與「${query}」相關的品項。`;
+                        replyText = `抱歉，找不到同時符合「${keywords.join(' ')}」的項目。`;
                     } else {
-                        const topResults = results.slice(0, 5); // 最多顯示 5 筆
-                        replyText = `為您找到 ${results.length} 筆資料：\n\n`;
+                        const topResults = results.slice(0, 5);
+                        replyText = `🔍 搜尋「${rawInput}」，共找到 ${results.length} 筆資料：\n\n`;
+                        
                         topResults.forEach((item, index) => {
                             const remaining = parseInt(item.qty || 0) - parseInt(item.consumedQty || 0) + parseInt(item.purchasedQty || 0);
-                            replyText += `${index + 1}. 【${item.series}】${item.typeName}\n   📍 位置：${item.location}\n   📦 剩餘數量：${remaining}\n\n`;
+                            const statusIcon = remaining <= 0 ? '🔴' : '🟢';
+                            const decommInfo = item.decommissioned === 'Y' ? ' (已除役)' : '';
+                            
+                            replyText += `${statusIcon} ${index + 1}. ${item.series} - ${item.typeName}${decommInfo}\n`;
+                            replyText += `   📍 ${item.location} | 📦 剩餘: ${remaining}\n`;
+                            if(item.eqp) replyText += `   🔧 設備: ${item.eqp}\n`;
+                            replyText += `\n`;
                         });
+                        
                         if (results.length > 5) {
-                            replyText += `...還有 ${results.length - 5} 筆未顯示，建議您使用畫面上方的主搜尋框查看完整清單哦！`;
+                            replyText += `(還有 ${results.length - 5} 筆資料，請縮小搜尋範圍或查看主清單)`;
                         }
                     }
+                    
                     setAssistantMessages(prev => [...prev, { role: 'assistant', text: replyText }]);
-                }, 500); // 模擬稍微思考延遲
+                }, 600);
             };
 
             const getLocationColor = (loc) => {
@@ -1209,7 +1275,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                         <div className="bg-blue-600 text-white p-3 flex justify-between items-center shrink-0">
                             <div className="flex items-center gap-2">
                                 <Icons.Bot className="w-5 h-5" />
-                                <span className="font-bold">共備庫存小幫手</span>
+                                <span className="font-bold">客服小幫手</span>
                             </div>
                             <button onClick={handleCloseAssistant} className="text-blue-200 hover:text-white transition">
                                 <Icons.X className="w-5 h-5" />
