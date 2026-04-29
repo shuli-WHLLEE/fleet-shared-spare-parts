@@ -8,15 +8,15 @@
     <!-- 1. 載入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- 2. 載入 React 和 ReactDOM (改用 cdnjs 穩定版) -->
+    <!-- 2. 載入 React 和 ReactDOM (cdnjs 穩定版) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
     
-    <!-- 3. 載入 Babel (改用 cdnjs 穩定版) -->
+    <!-- 3. 載入 Babel (cdnjs 穩定版) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js" crossorigin="anonymous"></script>
 
-    <!-- 4. 載入 Lucide Icons (鎖定版本) -->
-    <script src="https://unpkg.com/lucide@0.263.1/dist/umd/lucide.min.js"></script>
+    <!-- 4. 載入 Lucide Icons (使用 unpkg 穩定版本) -->
+    <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
 
     <style>
         body { font-size: 14px; }
@@ -402,6 +402,43 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
             Save: (props) => <LucideIcon name="Save" {...props} />,
             Box: (props) => <LucideIcon name="Box" {...props} />,
             PlusSquare: (props) => <LucideIcon name="PlusSquare" {...props} />,
+            MessageCircle: (props) => <LucideIcon name="MessageCircle" {...props} />,
+            Send: (props) => <LucideIcon name="Send" {...props} />,
+            Bot: (props) => <LucideIcon name="Bot" {...props} />,
+            Sparkles: (props) => <LucideIcon name="Sparkles" {...props} />,
+        };
+
+        // --- Gemini API Helper ---
+        const callGeminiAPI = async (prompt, systemInstruction = "") => {
+            const apiKey = "AIzaSyAa4Zffw4ySHrcrDwdMVT1hXmWQZYK1qEk"; 
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }]
+            };
+            if (systemInstruction) {
+                payload.systemInstruction = { parts: [{ text: systemInstruction }] };
+            }
+
+            const retries = [1000, 2000, 4000, 8000, 16000];
+            for (let i = 0; i <= retries.length; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const result = await response.json();
+                    return result.candidates?.[0]?.content?.parts?.[0]?.text || "抱歉，我目前無法回應。";
+                } catch (error) {
+                    if (i === retries.length) {
+                        console.error("Gemini API failed after retries:", error);
+                        return "連線至 ✨ 智慧引擎失敗，請稍後再試。";
+                    }
+                    await new Promise(r => setTimeout(r, retries[i]));
+                }
+            }
         };
 
         const Modal = ({ isOpen, onClose, item, onUpload, imageUrl, isUploading, uploadStatus, onUpdateUsage }) => {
@@ -601,6 +638,27 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
             const [isUploading, setIsUploading] = useState(false);
             const [uploadStatus, setUploadStatus] = useState('上傳中...');
             const [cloudStatus, setCloudStatus] = useState('offline');
+            const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+            // --- Chat Assistant State ---
+            const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+            const [assistantInput, setAssistantInput] = useState('');
+            const [assistantMessages, setAssistantMessages] = useState([
+                { role: 'assistant', text: '👋 您好！我是由 ✨ Gemini 驅動的庫存智慧助理。\n\n我可以幫您：\n1. 用自然語言查詢 (例如：「請問高雄還有沒有 WH50 的馬達？」)\n2. 進行智慧分析 (點擊上方的 ✨ AI 庫存分析)\n\n請問今天想找什麼呢？' }
+            ]);
+            const chatEndRef = useRef(null);
+
+            // 新增：處理關閉客服小幫手的邏輯
+            const handleCloseAssistant = () => {
+                setIsAssistantOpen(false);
+                // 延遲 300ms 等待縮下動畫結束後，還原初始狀態
+                setTimeout(() => {
+                    setAssistantInput('');
+                    setAssistantMessages([
+                        { role: 'assistant', text: '👋 您好！我是由 ✨ Gemini 驅動的庫存智慧助理。\n\n我可以幫您：\n1. 用自然語言查詢 (例如：「請問高雄還有沒有 WH50 的馬達？」)\n2. 進行智慧分析 (點擊上方的 ✨ AI 庫存分析)\n\n請問今天想找什麼呢？' }
+                    ]);
+                }, 300);
+            };
 
             const connectToFirebase = async () => {
                 if (userFirebaseConfig.apiKey.includes("請在此填入")) {
@@ -832,6 +890,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                 return ['All', ...list];
             }, [inventoryData]);
 
+            // Merge local data with cloud dynamics
             const inventoryDataWithDynamics = useMemo(() => {
                 return inventoryData.map(item => {
                     const cloud = cloudData[item.id] || {};
@@ -856,7 +915,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                         (item.decommissioned === 'Y' && '除役'.includes(term));
                     
                     const matchesSeries = selectedSeries === 'All' || item.series === selectedSeries;
-                    const matchesEqp = selectedEqp === 'All' || item.eqp === selectedEqp;
+                    const matchesEqp = selectedEqp === 'All' || item.eqp === selectedEqp; // New Logic
                     const matchesLocation = selectedLocation === 'All' || item.location === selectedLocation;
                     const matchesStatus = selectedStatus === 'All' || 
                         (selectedStatus === 'Empty' ? !item.status : item.status === selectedStatus);
@@ -884,6 +943,76 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                 const reconditionedCount = filteredDataWithDynamics.filter(i => i.status === '再生').length;
                 return { totalItems, totalQty, totalRemaining, newItemsCount, reconditionedCount };
             }, [filteredDataWithDynamics]);
+
+            // --- Chat Assistant Auto Scroll ---
+            useEffect(() => {
+                if (isAssistantOpen && chatEndRef.current) {
+                    chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, [assistantMessages, isAssistantOpen]);
+
+            // --- Gemini System Prompt Builder ---
+            const getSystemPrompt = (inventory) => {
+                // 壓縮資料以節省 Token，並排除雜訊
+                const compactData = inventory.map(item => ({
+                    系列: item.series,
+                    設備: item.eqp,
+                    品名: item.typeName,
+                    位置: item.location,
+                    剩餘數量: parseInt(item.qty || 0) - parseInt(item.consumedQty || 0) + parseInt(item.purchasedQty || 0),
+                    狀態: item.status
+                }));
+                return `你是一位專業的「庫存智慧助理」。請根據以下 JSON 格式的庫存資料，回答使用者的問題。
+回答時請：
+1. 語氣親切、專業，使用繁體中文。
+2. 若使用者詢問特定物品，請明確告知其「位置」與「剩餘數量」。
+3. 加上適當的 Emoji 增加易讀性 (如 📦, 📍, 🔴, 🟢)。
+4. 如果庫存資料中找不到相關資訊，請誠實告知，不要胡編亂造。
+5. 回答盡量簡潔，若資料筆數很多，列出前 3-5 筆最相關的即可。
+庫存資料：\n${JSON.stringify(compactData)}`;
+            };
+
+            // --- Smart Inventory Analysis ---
+            const handleSmartAnalysis = async () => {
+                setIsAnalyzing(true);
+                setIsAssistantOpen(true);
+                setAssistantMessages(prev => [...prev, { role: 'user', text: '請幫我進行 ✨ 智慧庫存健檢' }]);
+                setAssistantMessages(prev => [...prev, { role: 'assistant', text: '✨ 正在接收全庫存數據並進行 AI 分析，請稍候...' }]);
+
+                const prompt = "請以專業庫存管理員的角度，分析這份資料並提供：\n1. ⚠️ 緊急缺貨清單 (剩餘數量 <= 0 的重要品項，最多列出 3 項)。 \n2. 💡 庫存分佈概況 (例如各倉庫的集中度或品項分佈)。 \n3. 🎯 智慧建議 (針對目前的庫存狀況給出一到兩點具體建議)。排版請清晰易讀，並使用 Emoji。";
+
+                // 將目前畫面上的過濾資料作為上下文傳給 Gemini
+                const systemPrompt = getSystemPrompt(inventoryDataWithDynamics);
+                const response = await callGeminiAPI(prompt, systemPrompt);
+
+                setAssistantMessages(prev => [
+                    ...prev.slice(0, -1),
+                    { role: 'assistant', text: response }
+                ]);
+                setIsAnalyzing(false);
+            };
+
+            // --- Chat Assistant Logic ---
+            const handleSendAssistantMessage = async () => {
+                if (!assistantInput.trim()) return;
+                
+                const rawInput = assistantInput.trim();
+                const newMessages = [...assistantMessages, { role: 'user', text: rawInput }];
+                setAssistantMessages(newMessages);
+                setAssistantInput('');
+                
+                // 顯示思考中
+                setAssistantMessages(prev => [...prev, { role: 'assistant', text: '✨ AI 思考中...' }]);
+
+                // 將最新資料作為系統提示傳給 Gemini
+                const systemPrompt = getSystemPrompt(inventoryDataWithDynamics);
+                const response = await callGeminiAPI(rawInput, systemPrompt);
+
+                setAssistantMessages(prev => [
+                    ...prev.slice(0, -1),
+                    { role: 'assistant', text: response }
+                ]);
+            };
 
             const getLocationColor = (loc) => {
                 if (!loc) return 'bg-gray-100 text-gray-600 border-gray-200';
@@ -933,7 +1062,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
             );
 
             return (
-                <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-12">
+                <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-12 relative">
                     <Modal 
                         isOpen={modalOpen} 
                         onClose={closeModal} 
@@ -971,6 +1100,9 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                             </div>
                             
                             <div className="flex flex-wrap items-center gap-2 text-sm">
+                                <button onClick={handleSmartAnalysis} disabled={isAnalyzing} className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded transition font-bold shadow-sm hover:shadow disabled:opacity-50" title="使用 AI 分析目前庫存">
+                                    <Icons.Sparkles className="w-4 h-4" /> {isAnalyzing ? '分析中...' : '✨ AI 庫存分析'}
+                                </button>
                                 <button onClick={handleExport} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded transition font-bold shadow-sm hover:shadow" title="匯出表格">
                                     <Icons.Download className="w-4 h-4" /> 匯出
                                 </button>
@@ -981,10 +1113,10 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                     <main className="max-w-full px-4 mx-auto p-4 md:p-6 space-y-6">
                         {/* Statistics Cards */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <StatCard label="總項目數" value={stats.totalItems} sub="項" valueColor="text-blue-700" bgColor="bg-blue-50" />
-                            <StatCard label="總庫存量" value={stats.totalQty} sub="件" valueColor="text-emerald-700" bgColor="bg-emerald-50" />
+                            <StatCard label="總庫存量" value={stats.totalQty} sub="件" valueColor="text-blue-700" bgColor="bg-blue-50" />
                             <StatCard label="總剩餘庫存" value={stats.totalRemaining} sub="件" valueColor="text-pink-700" bgColor="bg-pink-50" />
-                            <StatCard label="再生品庫存" value={stats.reconditionedCount} sub="件" valueColor="text-orange-700" bgColor="bg-orange-50" />
+                            <StatCard label="新品庫存" value={stats.newItemsCount} sub="項" valueColor="text-purple-700" bgColor="bg-purple-50" />
+                            <StatCard label="再生品庫存" value={stats.reconditionedCount} sub="項" valueColor="text-orange-700" bgColor="bg-orange-50" />
                         </div>
 
                         {/* Controls */}
@@ -1128,6 +1260,64 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                             </div>
                         )}
                     </main>
+
+                    {/* Chat Assistant Toggle Button */}
+                    <button 
+                        onClick={() => isAssistantOpen ? handleCloseAssistant() : setIsAssistantOpen(true)}
+                        className={`fixed bottom-6 right-6 p-4 rounded-full shadow-2xl z-50 transition-all duration-300 transform hover:scale-110 ${isAssistantOpen ? 'bg-slate-700 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                    >
+                        {isAssistantOpen ? <Icons.X className="w-6 h-6" /> : <Icons.MessageCircle className="w-6 h-6" />}
+                    </button>
+
+                    {/* Chat Assistant Panel */}
+                    <div className={`fixed bottom-24 right-6 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 flex flex-col transition-all duration-300 overflow-hidden ${isAssistantOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-10 pointer-events-none'}`} style={{ height: '450px', maxHeight: '70vh' }}>
+                        {/* Header */}
+                        <div className="bg-blue-600 text-white p-3 flex justify-between items-center shrink-0">
+                            <div className="flex items-center gap-2">
+                                <Icons.Bot className="w-5 h-5" />
+                                <span className="font-bold">客服小幫手</span>
+                            </div>
+                            <button onClick={handleCloseAssistant} className="text-blue-200 hover:text-white transition">
+                                <Icons.X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        
+                        {/* Messages Area */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
+                            {assistantMessages.map((msg, idx) => (
+                                <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                                    <div className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap leading-relaxed shadow-sm ${
+                                        msg.role === 'user' 
+                                            ? 'bg-blue-600 text-white rounded-br-none' 
+                                            : 'bg-white border border-slate-200 text-slate-700 rounded-bl-none'
+                                    }`}>
+                                        {msg.text}
+                                    </div>
+                                </div>
+                            ))}
+                            <div ref={chatEndRef} />
+                        </div>
+
+                        {/* Input Area */}
+                        <div className="p-3 bg-white border-t border-slate-200 flex gap-2 shrink-0">
+                            <input 
+                                type="text" 
+                                className="flex-1 border border-slate-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+                                placeholder="輸入設備代碼或品名..."
+                                value={assistantInput}
+                                onChange={(e) => setAssistantInput(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSendAssistantMessage()}
+                            />
+                            <button 
+                                onClick={handleSendAssistantMessage}
+                                disabled={!assistantInput.trim()}
+                                className="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shrink-0"
+                            >
+                                <Icons.Send className="w-4 h-4 ml-0.5" />
+                            </button>
+                        </div>
+                    </div>
+
                 </div>
             );
         };
