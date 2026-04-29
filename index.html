@@ -116,9 +116,9 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
 62,WH31系列,MEPC,Repair Kit for air reducing valve,1,,WH311,,91161-1,
 63,WH51系列,MSBESB,前俥ACB (NW40H3),1,,上海施耐德,,7574-1,徵用一台為WH513損壞開關替換,
 64,WH51系列,MSBESB,電機ACB (NW50H2),5,,上海施耐德,,7574-0,徵用一台為WH505損壞開關替換,
-65,WH28系列,HYDW-M,電動錨纜機馬達電機,2,新品,廣州大連萬方,,兩台新品,
-66,WH28系列,HYDW-M,電動錨纜機馬達電機,3,再生,廣州大連萬方,,原從WH288上取下，舊品未翻新,
-67,WH31系列,HYDW-M,液壓油泵(T6DC050-031),1,,廣州大連萬方,348682,"923-0 ,WH31X甲板機械共備配件,2022.05從博福取回，需配公制螺絲",
+65,WH28系列,HYDW-M,電動錨纜機馬達電機,2,新品,上海大連萬方,,兩台新品,
+66,WH28系列,HYDW-M,電動錨纜機馬達電機,3,再生,上海大連萬方,,原從WH288上取下，舊品未翻新,
+67,WH31系列,HYDW-M,液壓油泵(T6DC050-031),1,,上海大連萬方,348682,"923-0 ,WH31X甲板機械共備配件,2022.05從博福取回，需配公制螺絲",
 68,WH50系列,BOWTHR,Bow thruster葉片 HNO.835~839,1,,台中碼頭,,台中碼頭,
 69,WH27系列,GE,電子調速器 (NZ-61),1,,香港嘉銘,,2048-0 , Maker: YANMAR,
 70,WH50系列,GE,電子調速器 (RHD-10),1,,香港嘉銘,,3248-0, Maker: YANMAR,
@@ -169,10 +169,10 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
 115,WH32/35/36/37系列,HYDW-M,錨機馬達(左),1,新品,WH351,,錨機風險配件-OB,
 116,WH32/35/36/37系列,HYDW-M,錨機馬達(右),1,新品,WH355,,錨機風險配件-OB,
 117,WH51系列,HYDW-M,"HYDR. OIL MOTOR (TYPE:HMC200-S-188-60-FM4-CS/M4:PL717;M1,2,3:PL830)",1,再生,WH511,,WH513 左舷錨機液壓馬達緊急採購2手品更換，；換下來的舊品送至大連萬芳廣州車間再生(ID-8524-1 ),
-118,HHI系列(A01~A06),HYDW-M,ELECTRIC MOTOR (PPW-28MB49Q),1,新品,廣州大連萬方,520467,WHA01-A20錨機風險配件統購，A01-A06共備一組MOTOR,
-119,HHI系列(A01~A06),HYDW-M,Overload coupling,1,新品,廣州大連萬方,520467,WHA01-A20錨機風險配件統購，A01-A06共備一組Overload coupling,
-120,SHI系列A07~A20),HYDW-M,"BRAKE-MOTOR PPW-28MB44Q/B5/IC410/IP56/140KW-2P=4",1,新品,廣州大連萬方,520468,WHA01-A20錨機風險配件統購，A07-A20共備2組MOTOR,
-121,SHI系列A07~A20),HYDW-M,OVERLOAD COUPLING,1,新品,廣州大連萬方,520468,WHA01-A20錨機風險配件統購，A07-A20共備2組Overload coupling,
+118,HHI系列(A01~A06),HYDW-M,ELECTRIC MOTOR (PPW-28MB49Q),1,新品,上海大連萬方,520467,WHA01-A20錨機風險配件統購，A01-A06共備一組MOTOR,
+119,HHI系列(A01~A06),HYDW-M,Overload coupling,1,新品,上海大連萬方,520467,WHA01-A20錨機風險配件統購，A01-A06共備一組Overload coupling,
+120,SHI系列A07~A20),HYDW-M,"BRAKE-MOTOR PPW-28MB44Q/B5/IC410/IP56/140KW-2P=4",1,新品,上海大連萬方,520468,WHA01-A20錨機風險配件統購，A07-A20共備2組MOTOR,
+121,SHI系列A07~A20),HYDW-M,OVERLOAD COUPLING,1,新品,上海大連萬方,520468,WHA01-A20錨機風險配件統購，A07-A20共備2組Overload coupling,
 122,SHI系列A07~A20),HYDW-M,"BRAKE-MOTOR PPW-28MB44Q/B5/IC410/IP56/140KW-2P=4",1,新品,深圳博福,520468,WHA01-A20錨機風險配件統購，A07-A20共備2組MOTOR,
 123,SHI系列A07~A20),HYDW-M,OVERLOAD COUPLING,1,新品,深圳博福,520468,WHA01-A20錨機風險配件統購，A07-A20共備2組Overload coupling,
 124,SHI系列A07~A20),AN-HEEL,REVERSIBLE PROPELLER PUMP (MODEL:V400A),1,新品,深圳博福,534189,SHI系列船ANTI HEELING PUMP WITH MOTOR共備配件；(尚未出貨，約2月初出貨),
@@ -405,6 +405,40 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
             MessageCircle: (props) => <LucideIcon name="MessageCircle" {...props} />,
             Send: (props) => <LucideIcon name="Send" {...props} />,
             Bot: (props) => <LucideIcon name="Bot" {...props} />,
+            Sparkles: (props) => <LucideIcon name="Sparkles" {...props} />,
+        };
+
+        // --- Gemini API Helper ---
+        const callGeminiAPI = async (prompt, systemInstruction = "") => {
+            const apiKey = ""; 
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }]
+            };
+            if (systemInstruction) {
+                payload.systemInstruction = { parts: [{ text: systemInstruction }] };
+            }
+
+            const retries = [1000, 2000, 4000, 8000, 16000];
+            for (let i = 0; i <= retries.length; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const result = await response.json();
+                    return result.candidates?.[0]?.content?.parts?.[0]?.text || "抱歉，我目前無法回應。";
+                } catch (error) {
+                    if (i === retries.length) {
+                        console.error("Gemini API failed after retries:", error);
+                        return "連線至 ✨ 智慧引擎失敗，請稍後再試。";
+                    }
+                    await new Promise(r => setTimeout(r, retries[i]));
+                }
+            }
         };
 
         const Modal = ({ isOpen, onClose, item, onUpload, imageUrl, isUploading, uploadStatus, onUpdateUsage }) => {
@@ -539,7 +573,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-xs text-green-600 mb-1">入庫數量 (Purchased)</label>
+                                                <label className="block text-xs text-green-600 mb-1">採購數量 (Purchased)</label>
                                                 <input 
                                                     type="number" 
                                                     className="w-full p-2 border border-green-200 rounded text-sm focus:ring-2 focus:ring-green-500 outline-none"
@@ -604,12 +638,13 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
             const [isUploading, setIsUploading] = useState(false);
             const [uploadStatus, setUploadStatus] = useState('上傳中...');
             const [cloudStatus, setCloudStatus] = useState('offline');
+            const [isAnalyzing, setIsAnalyzing] = useState(false);
 
             // --- Chat Assistant State ---
             const [isAssistantOpen, setIsAssistantOpen] = useState(false);
             const [assistantInput, setAssistantInput] = useState('');
             const [assistantMessages, setAssistantMessages] = useState([
-                { role: 'assistant', text: '👋 您好！我是庫存智慧助理。\n\n我可以幫您：\n1. 多關鍵字搜尋 (例如：「高雄 馬達」、「WH50 缺貨」)\n2. 查詢特定地點或設備\n3. 快速確認剩餘數量\n\n請問今天想找什麼呢？' }
+                { role: 'assistant', text: '👋 您好！我是由 ✨ Gemini 驅動的庫存智慧助理。\n\n我可以幫您：\n1. 用自然語言查詢 (例如：「請問高雄還有沒有 WH50 的馬達？」)\n2. 進行智慧分析 (點擊上方的 ✨ AI 庫存分析)\n\n請問今天想找什麼呢？' }
             ]);
             const chatEndRef = useRef(null);
 
@@ -620,7 +655,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                 setTimeout(() => {
                     setAssistantInput('');
                     setAssistantMessages([
-                        { role: 'assistant', text: '👋 您好！我是庫存智慧助理。\n\n我可以幫您：\n1. 多關鍵字搜尋 (例如：「高雄 馬達」、「WH50 缺貨」)\n2. 查詢特定地點或設備\n3. 快速確認剩餘數量\n\n請問今天想找什麼呢？' }
+                        { role: 'assistant', text: '👋 您好！我是由 ✨ Gemini 驅動的庫存智慧助理。\n\n我可以幫您：\n1. 用自然語言查詢 (例如：「請問高雄還有沒有 WH50 的馬達？」)\n2. 進行智慧分析 (點擊上方的 ✨ AI 庫存分析)\n\n請問今天想找什麼呢？' }
                     ]);
                 }, 300);
             };
@@ -916,105 +951,67 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                 }
             }, [assistantMessages, isAssistantOpen]);
 
+            // --- Gemini System Prompt Builder ---
+            const getSystemPrompt = (inventory) => {
+                // 壓縮資料以節省 Token，並排除雜訊
+                const compactData = inventory.map(item => ({
+                    系列: item.series,
+                    設備: item.eqp,
+                    品名: item.typeName,
+                    位置: item.location,
+                    剩餘數量: parseInt(item.qty || 0) - parseInt(item.consumedQty || 0) + parseInt(item.purchasedQty || 0),
+                    狀態: item.status
+                }));
+                return `你是一位專業的「庫存智慧助理」。請根據以下 JSON 格式的庫存資料，回答使用者的問題。
+回答時請：
+1. 語氣親切、專業，使用繁體中文。
+2. 若使用者詢問特定物品，請明確告知其「位置」與「剩餘數量」。
+3. 加上適當的 Emoji 增加易讀性 (如 📦, 📍, 🔴, 🟢)。
+4. 如果庫存資料中找不到相關資訊，請誠實告知，不要胡編亂造。
+5. 回答盡量簡潔，若資料筆數很多，列出前 3-5 筆最相關的即可。
+庫存資料：\n${JSON.stringify(compactData)}`;
+            };
+
+            // --- Smart Inventory Analysis ---
+            const handleSmartAnalysis = async () => {
+                setIsAnalyzing(true);
+                setIsAssistantOpen(true);
+                setAssistantMessages(prev => [...prev, { role: 'user', text: '請幫我進行 ✨ 智慧庫存健檢' }]);
+                setAssistantMessages(prev => [...prev, { role: 'assistant', text: '✨ 正在接收全庫存數據並進行 AI 分析，請稍候...' }]);
+
+                const prompt = "請以專業庫存管理員的角度，分析這份資料並提供：\n1. ⚠️ 緊急缺貨清單 (剩餘數量 <= 0 的重要品項，最多列出 3 項)。 \n2. 💡 庫存分佈概況 (例如各倉庫的集中度或品項分佈)。 \n3. 🎯 智慧建議 (針對目前的庫存狀況給出一到兩點具體建議)。排版請清晰易讀，並使用 Emoji。";
+
+                // 將目前畫面上的過濾資料作為上下文傳給 Gemini
+                const systemPrompt = getSystemPrompt(inventoryDataWithDynamics);
+                const response = await callGeminiAPI(prompt, systemPrompt);
+
+                setAssistantMessages(prev => [
+                    ...prev.slice(0, -1),
+                    { role: 'assistant', text: response }
+                ]);
+                setIsAnalyzing(false);
+            };
+
             // --- Chat Assistant Logic ---
-            const handleSendAssistantMessage = () => {
+            const handleSendAssistantMessage = async () => {
                 if (!assistantInput.trim()) return;
                 
                 const rawInput = assistantInput.trim();
-                
-                // 1. 定義停用詞/贅字 (Stop Words)
-                const stopWords = [
-                    '在哪裡', '在哪', '在什麼地方', '位置', '放在哪', // 地點相關
-                    '還有', '剩多少', '剩餘', '數量', '多少', '幾顆', '幾個', // 數量相關
-                    '幫我找', '查詢', '搜尋', '找一下', '請問', '請教', '我想找', // 動作
-                    '有嗎', '有沒有', '有無', // 存在與否
-                    '的', '嗎', '呢', '了', '是', '個', '筆', '啊', '哦' // 語助詞
-                ];
-                
-                // 2. 移除停用詞
-                let cleanInput = rawInput;
-                stopWords.forEach(word => {
-                    cleanInput = cleanInput.split(word).join(' ');
-                });
-
-                // 3. 分割關鍵字
-                const keywords = cleanInput.toLowerCase().split(/\s+/).filter(k => k.trim().length > 0);
-
                 const newMessages = [...assistantMessages, { role: 'user', text: rawInput }];
                 setAssistantMessages(newMessages);
                 setAssistantInput('');
                 
-                // Simulate thinking
-                setTimeout(() => {
-                     if (keywords.length === 0) {
-                        setAssistantMessages(prev => [...prev, { role: 'assistant', text: '抱歉，我沒聽懂您想找什麼。請試著輸入「設備名稱」或「編號」，例如：「主機」、「馬達」。' }]);
-                        return;
-                     }
+                // 顯示思考中
+                setAssistantMessages(prev => [...prev, { role: 'assistant', text: '✨ AI 思考中...' }]);
 
-                    // Logic: AND condition for all keywords
-                    const results = inventoryDataWithDynamics.filter(item => {
-                        const remaining = parseInt(item.qty || 0) - parseInt(item.consumedQty || 0) + parseInt(item.purchasedQty || 0);
-                        
-                        // Create a search corpus for this item
-                        const itemSearchableText = [
-                            item.series,
-                            item.eqp,
-                            item.typeName,
-                            item.location,
-                            item.po,
-                            item.status,
-                            item.remark,
-                            item.usageDynamics,
-                            // Add remaining qty as string for search
-                            String(remaining)
-                        ].join(' ').toLowerCase();
+                // 將最新資料作為系統提示傳給 Gemini
+                const systemPrompt = getSystemPrompt(inventoryDataWithDynamics);
+                const response = await callGeminiAPI(rawInput, systemPrompt);
 
-                        // Check if every keyword matches
-                        return keywords.every(kw => {
-                            // Smart Filters
-                            if (['缺貨', '無庫存', '沒貨', 'out of stock'].includes(kw)) {
-                                return remaining <= 0;
-                            }
-                            if (['有貨', '庫存', 'in stock'].includes(kw)) {
-                                return remaining > 0;
-                            }
-                            if (['除役', 'decommissioned'].includes(kw)) {
-                                return item.decommissioned === 'Y';
-                            }
-                            if (['現役', 'active'].includes(kw)) {
-                                return item.decommissioned !== 'Y';
-                            }
-                            
-                            // Default text match
-                            return itemSearchableText.includes(kw);
-                        });
-                    });
-
-                    let replyText = '';
-                    if (results.length === 0) {
-                        replyText = `抱歉，找不到同時符合「${keywords.join(' ')}」的項目。`;
-                    } else {
-                        const topResults = results.slice(0, 5);
-                        replyText = `🔍 搜尋「${rawInput}」，共找到 ${results.length} 筆資料：\n\n`;
-                        
-                        topResults.forEach((item, index) => {
-                            const remaining = parseInt(item.qty || 0) - parseInt(item.consumedQty || 0) + parseInt(item.purchasedQty || 0);
-                            const statusIcon = remaining <= 0 ? '🔴' : '🟢';
-                            const decommInfo = item.decommissioned === 'Y' ? ' (已除役)' : '';
-                            
-                            replyText += `${statusIcon} ${index + 1}. ${item.series} - ${item.typeName}${decommInfo}\n`;
-                            replyText += `   📍 ${item.location} | 📦 剩餘: ${remaining}\n`;
-                            if(item.eqp) replyText += `   🔧 設備: ${item.eqp}\n`;
-                            replyText += `\n`;
-                        });
-                        
-                        if (results.length > 5) {
-                            replyText += `(還有 ${results.length - 5} 筆資料，請縮小搜尋範圍或查看主清單)`;
-                        }
-                    }
-                    
-                    setAssistantMessages(prev => [...prev, { role: 'assistant', text: replyText }]);
-                }, 600);
+                setAssistantMessages(prev => [
+                    ...prev.slice(0, -1),
+                    { role: 'assistant', text: response }
+                ]);
             };
 
             const getLocationColor = (loc) => {
@@ -1103,6 +1100,9 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                             </div>
                             
                             <div className="flex flex-wrap items-center gap-2 text-sm">
+                                <button onClick={handleSmartAnalysis} disabled={isAnalyzing} className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded transition font-bold shadow-sm hover:shadow disabled:opacity-50" title="使用 AI 分析目前庫存">
+                                    <Icons.Sparkles className="w-4 h-4" /> {isAnalyzing ? '分析中...' : '✨ AI 庫存分析'}
+                                </button>
                                 <button onClick={handleExport} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded transition font-bold shadow-sm hover:shadow" title="匯出表格">
                                     <Icons.Download className="w-4 h-4" /> 匯出
                                 </button>
@@ -1161,7 +1161,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                                                 <th className="px-4 py-3 whitespace-nowrap min-w-[300px]">品名規格</th>
                                                 <th className="px-4 py-3 whitespace-nowrap text-center">原始</th>
                                                 <th className="px-4 py-3 whitespace-nowrap text-center">耗用</th>
-                                                <th className="px-4 py-3 whitespace-nowrap text-center">入庫</th>
+                                                <th className="px-4 py-3 whitespace-nowrap text-center">採購</th>
                                                 <th className="px-4 py-3 whitespace-nowrap text-center">剩餘</th>
                                                 <th className="px-4 py-3 whitespace-nowrap">狀態</th>
                                                 <th className="px-4 py-3 whitespace-nowrap">地點</th>
