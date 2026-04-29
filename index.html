@@ -410,8 +410,12 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
 
         // --- Gemini API Helper ---
         const callGeminiAPI = async (prompt, systemInstruction = "") => {
-            const apiKey = "AIzaSyBh1QB76Utp5ddhXO7RJ4JiMHsuuFfHBCs"; 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+            // ★★★ 在此填入您的 API Key ★★★
+            const apiKey = "AIzaSyAa4Zffw4ySHrcrDwdMVT1hXmWQZYK1qEk"; 
+            
+            // 【重要修復】如果有自訂金鑰，必須使用公開版模型名稱；否則使用內部預覽版
+            const modelName = apiKey ? "gemini-2.5-flash" : "gemini-2.5-flash-preview-09-2025";
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
             const payload = {
                 contents: [{ parts: [{ text: prompt }] }]
@@ -428,13 +432,18 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    
+                    if (!response.ok) {
+                        const errData = await response.json().catch(() => ({}));
+                        throw new Error(`HTTP ${response.status}: ${errData?.error?.message || 'Unknown Error'}`);
+                    }
+                    
                     const result = await response.json();
                     return result.candidates?.[0]?.content?.parts?.[0]?.text || "抱歉，我目前無法回應。";
                 } catch (error) {
                     if (i === retries.length) {
                         console.error("Gemini API failed after retries:", error);
-                        return "連線至 ✨ 智慧引擎失敗，請稍後再試。";
+                        return `連線至 ✨ 智慧引擎失敗 (${error.message})。請確認 API 金鑰是否正確。`;
                     }
                     await new Promise(r => setTimeout(r, retries[i]));
                 }
