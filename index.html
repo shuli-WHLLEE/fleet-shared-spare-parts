@@ -409,21 +409,13 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
         };
 
         // --- Gemini API Helper ---
-        // ★ Canvas 環境專屬設定：不需填入 API Key，系統會自動在背後注入憑證
-        const apiCache = new Map(); // 1. 快取機制：避免重複請求浪費 Quota
-
         const callGeminiAPI = async (prompt, systemInstruction = "") => {
+            // ★★★ 在此填入您的 API Key ★★★
             const apiKey = "AIzaSyDjH1ZPeBJ1MpEceM5fXr9vuK-v_sJZ2cI"; 
             
             // 【重要修復】如果有自訂金鑰，必須使用公開版模型名稱；否則使用內部預覽版
             const modelName = apiKey ? "gemini-2.5-flash" : "gemini-2.5-flash-preview-09-2025";
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-
-            const cacheKey = prompt + "|" + systemInstruction;
-            if (apiCache.has(cacheKey)) {
-                console.log("♻️ 命中快取，節省 API Quota");
-                return apiCache.get(cacheKey);
-            }
 
             const payload = {
                 contents: [{ parts: [{ text: prompt }] }]
@@ -432,10 +424,8 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                 payload.systemInstruction = { parts: [{ text: systemInstruction }] };
             }
 
-            const maxRetries = 5;
-            const baseDelay = 1000;
-
-            for (let i = 0; i <= maxRetries; i++) {
+            const retries = [1000, 2000, 4000, 8000, 16000];
+            for (let i = 0; i <= retries.length; i++) {
                 try {
                     const response = await fetch(url, {
                         method: 'POST',
@@ -444,29 +434,18 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                     });
                     
                     if (!response.ok) {
-                        // 2. 429 限流控制處理
-                        if (response.status === 429 && i < maxRetries) {
-                            throw new Error('429');
-                        }
                         const errData = await response.json().catch(() => ({}));
                         throw new Error(`HTTP ${response.status}: ${errData?.error?.message || 'Unknown Error'}`);
                     }
                     
                     const result = await response.json();
-                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "抱歉，我目前無法回應。";
-                    
-                    apiCache.set(cacheKey, text); // 寫入快取
-                    return text;
+                    return result.candidates?.[0]?.content?.parts?.[0]?.text || "抱歉，我目前無法回應。";
                 } catch (error) {
-                    if (i === maxRetries || error.message !== '429') {
+                    if (i === retries.length) {
                         console.error("Gemini API failed after retries:", error);
-                        if (error.message === '429') return "連線擁擠，API 配額暫時耗盡 (429)，請稍後再試。";
-                        return `連線至 ✨ 智慧引擎失敗 (${error.message})。請確認 API 環境與網路。`;
+                        return `連線至 ✨ 智慧引擎失敗 (${error.message})。請確認 API 金鑰是否正確。`;
                     }
-                    // 3. 指數退避 (Exponential Backoff) + Jitter：避免 API 瞬間被灌爆
-                    const delay = Math.pow(2, i) * baseDelay + Math.random() * 1000;
-                    console.warn(`觸發限流，等待 ${Math.round(delay)}ms 後重試...`);
-                    await new Promise(r => setTimeout(r, delay));
+                    await new Promise(r => setTimeout(r, retries[i]));
                 }
             }
         };
@@ -673,7 +652,6 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
             // --- Chat Assistant State ---
             const [isAssistantOpen, setIsAssistantOpen] = useState(false);
             const [assistantInput, setAssistantInput] = useState('');
-            const [isThinking, setIsThinking] = useState(false); // 新增防連點狀態
             const [assistantMessages, setAssistantMessages] = useState([
                 { role: 'assistant', text: '👋 您好！我是由 ✨ Gemini 驅動的庫存智慧助理。\n\n我可以幫您：\n1. 用自然語言查詢 (例如：「請問高雄還有沒有 WH50 的馬達？」)\n2. 進行智慧分析 (點擊上方的 ✨ AI 庫存分析)\n\n請問今天想找什麼呢？' }
             ]);
@@ -685,7 +663,6 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                 // 延遲 300ms 等待縮下動畫結束後，還原初始狀態
                 setTimeout(() => {
                     setAssistantInput('');
-                    setIsThinking(false);
                     setAssistantMessages([
                         { role: 'assistant', text: '👋 您好！我是由 ✨ Gemini 驅動的庫存智慧助理。\n\n我可以幫您：\n1. 用自然語言查詢 (例如：「請問高雄還有沒有 WH50 的馬達？」)\n2. 進行智慧分析 (點擊上方的 ✨ AI 庫存分析)\n\n請問今天想找什麼呢？' }
                     ]);
@@ -1026,13 +1003,12 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
 
             // --- Chat Assistant Logic ---
             const handleSendAssistantMessage = async () => {
-                if (!assistantInput.trim() || isThinking) return;
+                if (!assistantInput.trim()) return;
                 
                 const rawInput = assistantInput.trim();
                 const newMessages = [...assistantMessages, { role: 'user', text: rawInput }];
                 setAssistantMessages(newMessages);
                 setAssistantInput('');
-                setIsThinking(true);
                 
                 // 顯示思考中
                 setAssistantMessages(prev => [...prev, { role: 'assistant', text: '✨ AI 思考中...' }]);
@@ -1045,7 +1021,6 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                     ...prev.slice(0, -1),
                     { role: 'assistant', text: response }
                 ]);
-                setIsThinking(false);
             };
 
             const getLocationColor = (loc) => {
@@ -1336,19 +1311,18 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                         <div className="p-3 bg-white border-t border-slate-200 flex gap-2 shrink-0">
                             <input 
                                 type="text" 
-                                className="flex-1 border border-slate-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition disabled:bg-slate-100 disabled:text-slate-400"
-                                placeholder={isThinking ? "AI 思考中，請稍候..." : "輸入設備代碼或品名..."}
+                                className="flex-1 border border-slate-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+                                placeholder="輸入設備代碼或品名..."
                                 value={assistantInput}
                                 onChange={(e) => setAssistantInput(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleSendAssistantMessage()}
-                                disabled={isThinking}
                             />
                             <button 
                                 onClick={handleSendAssistantMessage}
-                                disabled={!assistantInput.trim() || isThinking}
+                                disabled={!assistantInput.trim()}
                                 className="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shrink-0"
                             >
-                                {isThinking ? <Icons.Loader2 className="w-4 h-4 ml-0.5 animate-spin" /> : <Icons.Send className="w-4 h-4 ml-0.5" />}
+                                <Icons.Send className="w-4 h-4 ml-0.5" />
                             </button>
                         </div>
                     </div>
