@@ -45,10 +45,6 @@
             border-color: #3b82f6;
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
         }
-        /* 自定義捲軸 */
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans">
@@ -413,10 +409,13 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
         };
 
         // --- Gemini API Helper ---
-        // ★ Canvas 環境專屬設定：不需填入 API Key，系統會自動在背後注入憑證
         const callGeminiAPI = async (prompt, systemInstruction = "") => {
-            const apiKey = ""; 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            // ★★★ 在此填入您的 API Key ★★★
+            const apiKey = "AIzaSyCpTCB9KSBkgNyKYShLG3O-yQ3WjVXA3uQ"; 
+            
+            // 【重要修復】如果有自訂金鑰，必須使用公開版模型名稱；否則使用內部預覽版
+            const modelName = apiKey ? "gemini-2.5-flash" : "gemini-2.5-flash-preview-09-2025";
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
             const payload = {
                 contents: [{ parts: [{ text: prompt }] }]
@@ -444,7 +443,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                 } catch (error) {
                     if (i === retries.length) {
                         console.error("Gemini API failed after retries:", error);
-                        return `連線至 ✨ 智慧引擎失敗 (${error.message})。請確認 API 環境與網路。`;
+                        return `連線至 ✨ 智慧引擎失敗 (${error.message})。請確認 API 金鑰是否正確。`;
                     }
                     await new Promise(r => setTimeout(r, retries[i]));
                 }
@@ -456,18 +455,12 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
             const [localPurchasedQty, setLocalPurchasedQty] = useState('0');
             const [localDynamics, setLocalDynamics] = useState('');
             const [isSaving, setIsSaving] = useState(false);
-            
-            // --- AI Features State ---
-            const [aiLoading, setAiLoading] = useState(false);
-            const [aiResult, setAiResult] = useState('');
-            const [aiTitle, setAiTitle] = useState('');
 
             useEffect(() => {
                 if (item) {
                     setLocalConsumedQty(item.consumedQty || '0');
                     setLocalPurchasedQty(item.purchasedQty || '0');
                     setLocalDynamics(item.usageDynamics || '');
-                    setAiResult(''); // 每次打開新項目時清空 AI 結果
                 }
             }, [item]);
 
@@ -487,28 +480,6 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                 }
             };
 
-            // ✨ 呼叫 Gemini：解釋零件用途
-            const handleExplain = async () => {
-                setAiLoading(true);
-                setAiTitle('規格與用途說明');
-                setAiResult('');
-                const prompt = `請以繁體中文向我解釋這個船舶或機械零件的用途與基本原理：\n系列：${item.series}\n設備碼：${item.eqp}\n品名規格：${item.typeName}\n備註：${item.remark}\n\n請用簡單明瞭的方式向非工程背景的人員說明，並加上適當的 Emoji。如果資訊太少，請給出合理猜測即可。`;
-                const res = await callGeminiAPI(prompt, "你是一個專業的船舶輪機與機械工程師。");
-                setAiResult(res);
-                setAiLoading(false);
-            };
-
-            // ✨ 呼叫 Gemini：撰寫採購草稿
-            const handleRestock = async () => {
-                setAiLoading(true);
-                setAiTitle('採購申請信件草稿');
-                setAiResult('');
-                const prompt = `請幫我撰寫一封專業的繁體中文「採購申請 Email 草稿」。\n需要採購的品項資訊如下：\n- 品名規格：${item.typeName}\n- 系列/設備：${item.series} / ${item.eqp}\n- 目前剩餘數量：${remainingQty}\n- 目前存放地：${item.location}\n- PO/訂單參考：${item.po || '無'}\n\n信件請包含：主旨、稱呼、說明缺貨狀況、申請採購上述零件、禮貌性結尾。語氣需專業禮貌，不要編造多餘資訊，請直接給我可以複製貼上的純文字內容。`;
-                const res = await callGeminiAPI(prompt, "你是一個專業的採購行政助理與秘書。");
-                setAiResult(res);
-                setAiLoading(false);
-            };
-
             if (!isOpen || !item) return null;
             
             const remainingQty = parseInt(item.qty || 0) - parseInt(localConsumedQty || 0) + parseInt(localPurchasedQty || 0);
@@ -526,7 +497,7 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                             </button>
                         </div>
                         
-                        <div className="p-6 overflow-y-auto custom-scrollbar">
+                        <div className="p-6 overflow-y-auto">
                             <div className="space-y-4">
                                 <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 min-h-[250px] relative group overflow-hidden">
                                     {isUploading ? (
@@ -585,59 +556,6 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
                                         }`}>{item.status || '未標示'}</span>
                                         {item.decommissioned === 'Y' && <span className="ml-2 text-red-500 font-bold text-xs">[已除役]</span>}
                                     </div>
-                                </div>
-
-                                {/* ✨ AI 智慧功能區 (Gemini Integration) */}
-                                <div className="bg-purple-50/50 p-3 rounded-lg border border-purple-100">
-                                    <div className="flex justify-between items-center mb-2 border-b border-purple-200 pb-2">
-                                        <label className="text-sm font-bold text-purple-800 flex items-center gap-1">
-                                            <Icons.Sparkles className="w-4 h-4" /> AI 智慧協助
-                                        </label>
-                                    </div>
-                                    <div className="flex gap-2 mb-2">
-                                        <button 
-                                            onClick={handleExplain}
-                                            disabled={aiLoading}
-                                            className="flex-1 bg-white border border-purple-200 text-purple-700 hover:bg-purple-100 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
-                                        >
-                                            <Icons.Info className="w-3.5 h-3.5" /> 說明零件用途
-                                        </button>
-                                        <button 
-                                            onClick={handleRestock}
-                                            disabled={aiLoading}
-                                            className="flex-1 bg-white border border-purple-200 text-purple-700 hover:bg-purple-100 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
-                                        >
-                                            <Icons.FileText className="w-3.5 h-3.5" /> 撰寫採購草稿
-                                        </button>
-                                    </div>
-                                    
-                                    {(aiLoading || aiResult) && (
-                                        <div className="bg-white p-3 rounded-lg border border-purple-200 text-sm shadow-inner relative mt-2">
-                                            {aiLoading ? (
-                                                <div className="flex items-center gap-2 text-purple-600 font-medium py-2">
-                                                    <Icons.Loader2 className="w-4 h-4 animate-spin" />
-                                                    <span className="animate-pulse">✨ Gemini 正在為您處理「{aiTitle}」...</span>
-                                                </div>
-                                            ) : (
-                                                <div className="relative pt-1">
-                                                    <div className="font-bold text-purple-800 mb-2 flex items-center gap-1.5 border-b border-purple-50 pb-2">
-                                                        {aiTitle === '規格與用途說明' ? <Icons.Info className="w-4 h-4" /> : <Icons.FileText className="w-4 h-4" />}
-                                                        {aiTitle}
-                                                    </div>
-                                                    <div className="text-slate-700 whitespace-pre-wrap text-xs leading-relaxed max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                                                        {aiResult}
-                                                    </div>
-                                                    <button 
-                                                        onClick={() => setAiResult('')}
-                                                        className="absolute top-0 right-0 text-slate-400 hover:text-slate-600 transition bg-slate-50 hover:bg-slate-200 p-1 rounded-full"
-                                                        title="清除內容"
-                                                    >
-                                                        <Icons.X className="w-3.5 h-3.5" />
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
                                 </div>
 
                                 {/* Usage Management Section */}
