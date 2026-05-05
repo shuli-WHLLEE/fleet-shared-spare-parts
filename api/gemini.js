@@ -1,35 +1,52 @@
-const models = [
-  "gemini-2.5-flash",
-  "gemini-2.5-flash-lite"
-];
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Only POST allowed" });
+  }
 
-for (const model of models) {
-  for (let i = 0; i < 3; i++) {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      }
-    );
+  try {
+    const { prompt } = req.body;
+
+    if (!prompt) {
+      return res.status(400).json({ error: "Missing prompt" });
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey) {
+      return res.status(500).json({ error: "Missing GEMINI_API_KEY" });
+    }
+
+    const url =
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [{ text: prompt }]
+          }
+        ]
+      })
+    });
 
     const data = await response.json();
 
-    if (response.ok) {
-      const text =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
-      return res.status(200).json({ text });
-    }
-
-    if (response.status !== 503) {
+    if (!response.ok) {
       return res.status(response.status).json(data);
     }
 
-    await new Promise(r => setTimeout(r, 1500 * (i + 1)));
+    const text =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+
+    return res.status(200).json({ text });
+  } catch (error) {
+    return res.status(500).json({
+      error: "Server error",
+      detail: error.message
+    });
   }
 }
-
-return res.status(503).json({
-  error: "Gemini 目前繁忙，請稍後再試。"
-});
