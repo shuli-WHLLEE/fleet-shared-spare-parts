@@ -1,29 +1,12 @@
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Only POST allowed" });
-  }
+const models = [
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite"
+];
 
-  try {
-    const { prompt, systemInstruction } = req.body;
-
-    const apiKey = process.env.GEMINI_API_KEY;
-
-    if (!apiKey) {
-      return res.status(500).json({ error: "Missing GEMINI_API_KEY" });
-    }
-
-    const payload = {
-      contents: [{ parts: [{ text: prompt }] }]
-    };
-
-    if (systemInstruction) {
-      payload.systemInstruction = {
-        parts: [{ text: systemInstruction }]
-      };
-    }
-
+for (const model of models) {
+  for (let i = 0; i < 3; i++) {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -33,15 +16,20 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    if (!response.ok) {
+    if (response.ok) {
+      const text =
+        data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+      return res.status(200).json({ text });
+    }
+
+    if (response.status !== 503) {
       return res.status(response.status).json(data);
     }
 
-    const text =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
-
-    return res.status(200).json({ text });
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
+    await new Promise(r => setTimeout(r, 1500 * (i + 1)));
   }
 }
+
+return res.status(503).json({
+  error: "Gemini 目前繁忙，請稍後再試。"
+});
