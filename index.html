@@ -410,46 +410,26 @@ ID,SERIES,EQP,TYPENAME,QTY,STATUS,LOCATION,PO,REMARK,DECOMMISSIONED
 
         // --- Gemini API Helper ---
         const callGeminiAPI = async (prompt, systemInstruction = "") => {
-            // ★★★ 在此填入您的 API Key ★★★
-            const apiKey = "AIzaSyAZ5GrnFTTVITNb46Xk8BbvjwUFi6Alzd8"; 
-            
-            // 【重要修復】如果有自訂金鑰，必須使用公開版模型名稱；否則使用內部預覽版
-            const modelName = apiKey ? "gemini-2.5-flash" : "gemini-2.5-flash-preview-09-2025";
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+    try {
+        const response = await fetch("/api/gemini", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ prompt, systemInstruction })
+        });
 
-            const payload = {
-                contents: [{ parts: [{ text: prompt }] }]
-            };
-            if (systemInstruction) {
-                payload.systemInstruction = { parts: [{ text: systemInstruction }] };
-            }
+        const data = await response.json();
 
-            const retries = [1000, 2000, 4000, 8000, 16000];
-            for (let i = 0; i <= retries.length; i++) {
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    
-                    if (!response.ok) {
-                        const errData = await response.json().catch(() => ({}));
-                        throw new Error(`HTTP ${response.status}: ${errData?.error?.message || 'Unknown Error'}`);
-                    }
-                    
-                    const result = await response.json();
-                    return result.candidates?.[0]?.content?.parts?.[0]?.text || "抱歉，我目前無法回應。";
-                } catch (error) {
-                    if (i === retries.length) {
-                        console.error("Gemini API failed after retries:", error);
-                        return `連線至 ✨ 智慧引擎失敗 (${error.message})。請確認 API 金鑰是否正確。`;
-                    }
-                    await new Promise(r => setTimeout(r, retries[i]));
-                }
-            }
-        };
+        if (!response.ok) {
+            throw new Error(data?.error?.message || data?.error || "API error");
+        }
 
+        return data.text || "無回應";
+    } catch (error) {
+        return `連線至 ✨ 智慧引擎失敗 (${error.message})。請確認 Vercel 環境變數是否正確。`;
+    }
+};
         const Modal = ({ isOpen, onClose, item, onUpload, imageUrl, isUploading, uploadStatus, onUpdateUsage }) => {
             const [localConsumedQty, setLocalConsumedQty] = useState('0');
             const [localPurchasedQty, setLocalPurchasedQty] = useState('0');
